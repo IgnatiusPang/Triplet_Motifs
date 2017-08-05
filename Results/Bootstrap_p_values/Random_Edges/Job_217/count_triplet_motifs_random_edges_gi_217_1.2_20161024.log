@@ -1,0 +1,1542 @@
+Loading required package: methods
+
+Attaching package: 'igraph'
+
+The following objects are masked from 'package:stats':
+
+    decompose, spectrum
+
+The following object is masked from 'package:base':
+
+    union
+
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:igraph':
+
+    %>%, as_data_frame, groups, union
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+R version 3.2.2 (2015-08-14)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: CentOS release 6.3 (Final)
+
+locale:
+[1] C
+
+attached base packages:
+[1] parallel  methods   stats     graphics  grDevices utils     datasets 
+[8] base     
+
+other attached packages:
+[1] lazyeval_0.1.10 dplyr_0.4.3     igraph_1.0.1   
+
+loaded via a namespace (and not attached):
+[1] R6_2.1.2       assertthat_0.1 magrittr_1.5   tools_3.2.2    DBI_0.4-1     
+[6] Rcpp_0.12.0   
+[1] "is_run_locally =  FALSE"
+[1] "proportion_of_original_network_size_gi_network = 1.2"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83279
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84411
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83277
+Source: local data frame [1 x 1]
+
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84413
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83204
+ [1 x 1]
+
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83362
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84486
+  count
+  (int)
+1 83349
+  count
+  (int)
+1 84328
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84341
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83203
+Source: local data frame [1 x 1]
+
+ource: local data frame [1 x 1]
+
+  count
+  (int)
+1 84487
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83236
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84454
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83265
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84425
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83192
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84498
+Source: local data frame [1 x 1]
+
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83206
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83079
+  count
+  (int)
+1 84484
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84611
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83290
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84400
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83318
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84372
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 1[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83127
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84563
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83378
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84312
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83272
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84418
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83197
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84493
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83366
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84324
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83270
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84420
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83395
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84295
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83352
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84338
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83294
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84396
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83305
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84385
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83324
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84366
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83181
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84509
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83518
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84172
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83316
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84374
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83268
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84422
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83336
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84354
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83179
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84511
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83336
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84354
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83288
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84402
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83157
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84533
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83173
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84517
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83301
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84389
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83269
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84421
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83537
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84153
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83195
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84495
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83334
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84356
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83147
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84543
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83245
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84445
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83144
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84546
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83242
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84448
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83243
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84447
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83271
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84419
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83220
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84470
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83295
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84395
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83257
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84433
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83456
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84234
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83297
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84393
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83362
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84328
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83335
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84355
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83078
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84612
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83254
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84436
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83296
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84394
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83397
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84293
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83205
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84485
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83205
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84485
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83439
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84251
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83356
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84334
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83324
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84366
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83334
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84356
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83469
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84221
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83301
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84389
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83285
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84405
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83244
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84446
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83245
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84445
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83435
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84255
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83300
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84390
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83286
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84404
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83323
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84367
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83217
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84473
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83149
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84541
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_kinase_network = 2259"
+[1] "rewire_graph: num_iterations = 2259"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_ppi_network = 13301"
+[1] "rewire_graph: num_iterations = 13292"
+[1] "rewire_graph: Mode degree distribution"
+[1] "rewired_tf_network = 6117"
+[1] "rewire_graph: num_iterations = 6117"
+[1] "rewire_graph: Mode degree distribution"
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 83289
+Source: local data frame [1 x 1]
+
+  count
+  (int)
+1 84401
+[1] "rewire_genetic_interactions_network = 167627"
+[1] "rewire_graph: num_iterations = 167627"
+[1] "rewire_graph: Mode degree distribution"

@@ -1,0 +1,121 @@
+---
+title: "rewire_network"
+author: "Ignatius Pang"
+date: "7 May 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(igraph)
+library(tibble)
+library(dplyr)
+library(ggplot2)
+
+ base_directory <- "/home/ignatius/PostDoc/2016/Triplet_Motifs/"
+# base_directory <- "/home/ignatius/Documents/Postdoc/2016/Triplet_Motifs/"
+
+data_directory <- file.path( base_directory, "Data/Triplet_Motifs_R_data") 
+
+
+load( file.path(data_directory, "network_data_library.Rdata"))
+
+source( file.path(base_directory, "Source/Common", "count_triplet_motifs_helper.R"))
+ 
+```
+
+## R Markdown
+
+
+```{r}
+
+
+# Make a ring with 10 vertices 
+g <- make_ring(10, circular = TRUE)
+
+# Plot the ring 
+plot(g)
+
+# Count the number of edges in the graph
+number_of_edges <- ecount( g)
+ 
+# Rewire the graphs by swapping edges 10 times, keeping the degree distribution the same
+ graph_1 <- g %>%
+			rewire(keeping_degseq(loops = FALSE, niter = number_of_edges))
+ 				
+ 				# loops : Whether to allow destroying and creating loop edges.
+ 				# niter : number of rewiring trials to perform 
+ 				
+# Plot the graph
+ plot(graph_1)
+ 
+# What happens if I don't keep the edgree distribution the same 
+ graph_2 <- g %>%
+					 rewire( each_edge(prob=1, loops = FALSE, multiple=FALSE))
+ 				
+ 				# loops : Whether to allow destroying and creating loop edges.
+ 				# multiple : Logical scalar, whether multiple edges are allowed int the generated graph
+ 				
+ 				
+ plot(graph_2)
+
+```
+
+
+
+```{r }
+
+format_degree_distribution_as_table <- function( igraph_object, label) {
+	
+	table_of_node_degrees <- table( degree(igraph_object))
+	
+	## Add 1 to the values to avoid log(0)
+	x_axis <- 	as.numeric( names( table_of_node_degrees ) )+ 1
+	y_axis <- as.numeric(t(table_of_node_degrees)) + 1
+	
+	# plot( x_axis , y_axis,  log="xy")
+	
+	head(y_axis)
+	
+	result_table <- data.frame( label=rep(label, length(x_axis)), degrees=x_axis, frequency=y_axis  )
+	
+	return(result_table)
+}
+
+
+## Obtain a protein-protein interactions network 
+
+head( sbi_interactome_collated)
+	
+# Read in the graph object
+graph_1 <- graph.data.frame(sbi_interactome_collated[, c("oln_id_a", "oln_id_b")], directed=FALSE, vertices=NULL)
+
+# Tabulate and graph the node degrees of the original network
+graph_1_table <- format_degree_distribution_as_table(graph_1, "Original Network")
+  
+# Rewire the network using degree-preserving randomization  
+# Plot the degree distribution of the network afterwards
+graph_2 <- graph_1  %>%
+			rewire(keeping_degseq(loops = FALSE, niter = number_of_edges))
+   
+graph_2_table <- format_degree_distribution_as_table(graph_2, "Rewired, keeping degree distribution")
+
+# Rewire the network without keeping the degree distribution the same
+# Plot the degree distribution of the network afterwards
+graph_3 <- graph_1  %>%
+			rewire(each_edge(prob=0.4, loops = FALSE, multiple=FALSE))
+   
+graph_3_table <- format_degree_distribution_as_table(graph_3, "Random rewiring")
+
+  
+merged_table <- rbind( graph_1_table, graph_2_table, graph_3_table)
+
+ggplot( merged_table, aes( degrees, frequency)) +
+	geom_point() +
+	facet_grid ( . ~ label) + 
+    scale_x_continuous(trans='log2') + 
+    scale_y_continuous(trans='log2') 
+ 
+```
+

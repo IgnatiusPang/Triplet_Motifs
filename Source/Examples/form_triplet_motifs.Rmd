@@ -1,0 +1,501 @@
+---
+title: "Form Triplet Motifs"
+author: "Ignatius Pang"
+date: "8 May 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(igraph)
+library(plyr)
+library(dplyr)
+library(purrr)
+library(tibble)
+library(tidyr)
+
+
+## Load the root base directory for the entire project
+source( "./Common/parameters_file.R")
+
+data_directory <- file.path( base_directory, "Data/Triplet_Motifs_R_data") 
+
+load( file.path(data_directory, "network_data_library.Rdata"))
+
+source( file.path(base_directory, "Source/Common", "count_triplet_motifs_helper.R"))
+
+```
+
+
+
+```{r}
+
+# Genetic interactions network table
+
+filtered_costanzo_stringent <- filtered_costanzo_stringent_2016 %>% 
+								dplyr::select( one_of( c( "query_oln_id_edited", "array_oln_id_edited", "genetic_interaction_score"))) %>%
+								dplyr::rename( node_a = query_oln_id_edited, node_b= array_oln_id_edited )
+
+# Re-arrange the edges such that the ID of node A is always greater than ID of node B
+# This removes the symmetry in the triplet motif dataset 
+a_gt_b <- dplyr::filter( filtered_costanzo_stringent, node_a >= node_b   )
+
+b_gt_a <- dplyr::filter( filtered_costanzo_stringent, node_b > node_a   ) %>%
+		  dplyr::rename( node_a=node_b, node_b=node_a ) 
+
+# If the genetic interaction has been screen more than once, get the least negative score for that interaction
+filtered_costanzo_stringent <- dplyr::union( a_gt_b, b_gt_a) %>%
+							   dplyr::group_by( node_a, node_b) %>%
+							   dplyr::summarise(max_gi_score = max(genetic_interaction_score) ) %>%
+							   dplyr::rename( genetic_interaction_score=max_gi_score) %>%
+							   dplyr::ungroup()
+
+head( filtered_costanzo_stringent ) 
+
+# Count the unique number of proteins in triplet motifs
+length ( unique(  c(as.vector(as.data.frame(filtered_costanzo_stringent)[, "node_a"]) , 
+					as.vector (as.data.frame( filtered_costanzo_stringent)[, "node_b"] )) ) )
+
+```
+
+```{r}
+# All other biological networks, protein-protein, kinase-substrate, transcription factor-target gene
+head( interactions_combined)
+
+# Rename the tables
+interactions_combined_1 <- interactions_combined %>%
+							dplyr::rename( node_a = oln_id_a, 
+										   node_c= oln_id_b, 
+										   type_ac_long = interaction_type,
+										   type_ac = interaction_type_abbrev)
+
+interactions_combined_2 <- interactions_combined %>%
+							dplyr::rename( node_b = oln_id_a, 
+										   node_c= oln_id_b, 
+										   type_bc_long = interaction_type,
+										   type_bc = interaction_type_abbrev )
+
+```
+
+
+Total number of proteins in the integrated network
+```{r}
+
+
+list_of_proteins_genetic_interactions <-	filtered_costanzo_stringent  %>% 
+	tidyr::gather( "node", "oln_id", 1:2) %>%
+	dplyr::select ( -node) %>%
+	dplyr::select ( -genetic_interaction_score) %>%
+	distinct() 
+
+
+list_of_proteins_physical_interactions <- interactions_combined  %>% 
+	tidyr::gather( "node", "oln_id", 1:2) %>%
+	dplyr::select ( -node) %>%
+	dplyr::select ( -interaction_type) %>%
+	dplyr::select ( -interaction_type_abbrev) %>%
+	distinct()
+
+
+total_number_of_proteins_integrated_biological_newtork <-    list_of_proteins_genetic_interactions %>% 
+	rbind ( list_of_proteins_physical_interactions ) %>%
+	distinct () %>%
+	count()
+
+total_number_of_proteins_integrated_biological_newtork
+
+```
+
+
+
+```{r}
+## Join the networks together to find triplets where at least one edge is a negative genetic interaction 
+
+
+				  # Join the genetic interaction to the other biological networks
+triplet_motifs <- dplyr::inner_join( filtered_costanzo_stringent, interactions_combined_1, by="node_a" )  %>%
+						# Closing the triplets with a third edge from the other biological networks 	
+					    dplyr::inner_join( interactions_combined_2, by=c("node_b"= "node_b", "node_c"= "node_c") ) %>%
+						# Select the corresponding columns
+					    dplyr::select ( one_of( c("node_a", "node_b", "node_c", "type_ac", "type_bc", 
+					    						  "type_ac_long", "type_bc_long", "genetic_interaction_score"))) %>%
+	
+						# Remove special cases where Node A == Node C or Node B == Node C
+						dplyr::filter ( node_a != node_c) %>%
+						dplyr::filter ( node_b != node_c) %>%
+	
+						# Remove duplicates
+					    dplyr::distinct() %>%
+	
+						# Arrange the columns in the order that I want 
+					    dplyr::arrange( node_a, node_b, node_c, type_bc, type_ac)
+					 
+triplet_motifs
+
+## Count the number of motifs
+nrow( triplet_motifs)
+
+triplet_motifs %>%
+	dplyr::select( one_of ( c( "node_a", "node_b", "node_c", "type_ac", "type_bc", "genetic_interaction_score"))) %>%
+	write.table ( file.path( list_of_triplets_directory,  "triplet_motifs_costanzo_2016.txt"), sep="\t", quote=FALSE, row.names = FALSE ) 
+
+```
+
+
+```{r}
+
+# Count the number of each type of triplet motifs
+
+# Count the cases where type_ac is greater than type_bc (e.g. string comparison)
+a_ge_b <- filter( triplet_motifs, type_ac >= type_bc ) %>%
+		group_by( type_ac, type_bc) %>%
+		summarise(counts=n())
+
+# Count the cases where type_bc is greater than type_ac (e.g. string comparison)
+b_gt_a <- filter( triplet_motifs, type_bc > type_ac ) %>%
+		group_by( type_ac, type_bc) %>%
+		summarise(counts=n()) %>%
+		rename ( type_ac= type_bc, type_bc = type_ac) %>%
+		select( one_of( c("type_ac", "type_bc", "counts") ))
+	
+# Merge the above results together
+triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
+		group_by( type_ac, type_bc) %>% 
+		summarise(total_count=sum(counts)) %>%
+		arrange( type_ac, type_bc)
+
+# Here is the final results
+triplet_motif_counts
+
+dim( triplet_motif_counts)
+
+triplet_motif_counts <- as.data.frame(triplet_motif_counts)
+
+triplet_motif_counts  <- mutate( triplet_motif_counts, motif_type = paste(type_ac, type_bc, sep="") )  %>%
+						arrange ( desc(total_count))
+
+triplet_motif_counts[, "motif_type"] <- factor ( as.vector(triplet_motif_counts[,"motif_type"]), levels=as.vector(triplet_motif_counts[,"motif_type"]))
+
+library(ggplot2)
+
+ggplot ( triplet_motif_counts, aes(motif_type, total_count)) + 
+	geom_point()
+
+```
+
+Find the number of edges of each type in the triplet motifs network
+```{r}
+
+
+ab_interactions <- triplet_motifs %>%
+					dplyr::select( one_of(c( "node_a", "node_b")))  %>%
+					dplyr::rename( node_x = node_a, node_y = node_b) %>% 
+					dplyr::mutate( type="gi")
+
+ac_interactions <- triplet_motifs %>% 
+	dplyr::select( one_of(c( "node_a", "node_c", "type_ac"))) %>%
+	rename( type= type_ac, node_x = node_a, node_y = node_c)
+
+
+bc_interactions <- triplet_motifs %>% 
+	dplyr::select( one_of(c( "node_b", "node_c", "type_bc"))) %>%
+	rename( type= type_bc, node_x = node_b, node_y = node_c)
+
+
+# This function makes sure all of the interactions are in the same direction.
+# This helps with removing duplicates. 
+fix_interaction <- function ( interactions_list) {
+	
+	interactions_list <- setNames( as.list(as.vector(interactions_list) ), names( interactions_list) )
+
+	
+	if( ( interactions_list$type == 'p'  | interactions_list$type == 'gi'  | interactions_list$type == '') 
+		& interactions_list['node_x'] < interactions_list$node_y ) {
+		# perform swapping
+		temp <- interactions_list$node_y
+		interactions_list$node_y <- interactions_list$node_x
+		interactions_list$node_x <- temp
+	} else if  ( interactions_list$type == 'tu' ) {
+		
+		temp <- interactions_list$node_y
+		interactions_list$node_y <- interactions_list$node_x
+		interactions_list$node_x <- temp
+		interactions_list$type <- "td"
+	} else if  ( interactions_list$type == 'ku' ) {
+		
+		temp <- interactions_list$node_y
+		interactions_list$node_y <- interactions_list$node_x
+		interactions_list$node_x <- temp
+		interactions_list$type <- "kd"
+	}
+	
+	return( unlist( interactions_list )) ## Need to unlist it
+}
+
+
+ab_interactions_list <- as.list(as.data.frame(t(ab_interactions))) %>%
+						map(fix_interaction)
+
+ab_interactions <- ab_interactions_list %>%
+					ldply() %>%    ## Convert back to a data.frame
+					select ( -(.id)) %>% ## remove the .id column 
+					distinct()
+ 
+ac_interactions_list <- as.list(as.data.frame(t(ac_interactions))) %>%
+						map( fix_interaction) 
+
+ac_interactions <- ac_interactions_list %>%
+					ldply() %>% 
+					select ( -(.id))
+
+
+bc_interactions_list <- as.list(as.data.frame(t(bc_interactions))) %>%
+						map( fix_interaction) 
+
+bc_interactions <- bc_interactions_list %>%
+					ldply() %>% 
+					select ( -(.id))
+
+
+interactions_table <- bind_rows( ac_interactions, bc_interactions, ab_interactions) %>%
+					  distinct() 
+
+## Total number of unique interactions in the network of triplets. Removing overlapping edges. Ignoring direction of edges
+total_number_of_interactions_triplet_network_no_overlap_no_direction <- interactions_table %>% 
+												mutate ( type = '') %>%
+											    t() %>% as.data.frame() %>% as.list() %>%
+												map( fix_interaction) %>%
+												ldply() %>% 
+												select ( -(.id)) %>% 
+												distinct() %>%
+												count()
+total_number_of_interactions_triplet_network_no_overlap_no_direction
+
+
+## Number of each type of interactions 
+interactions_count_table <- interactions_table %>%
+							group_by(type) %>%
+							summarise ( num_interactions = n() )
+
+### Total number of proteins 
+total_number_of_proteins_in_triplets <-	interactions_table  %>% 
+	tidyr::gather( "node", "oln_id", 1:2) %>%
+	dplyr::select ( -node) %>%
+	dplyr::select ( -type) %>%
+	distinct() %>% 
+	count()	
+
+### Number of proteins in each type of network
+all_nodes <- interactions_table %>% 
+	tidyr::gather( "node", "oln_id", 1:2) %>%
+	dplyr::select ( -node) %>%
+	distinct() %>% 
+	group_by(type) %>% 
+	count()
+
+
+## Number of kinases in the triplet netwrok
+interactions_table %>% 
+	dplyr::filter ( type=='kd') %>%
+	dplyr::select ( one_of ( c( 'node_x'))) %>%
+	distinct()  %>%
+	count()
+
+
+## Number of transcription factors in the triplet netwrok
+interactions_table %>% 
+	dplyr::filter ( type=='td') %>%
+	dplyr::select ( one_of ( c( 'node_x'))) %>%
+	distinct()  %>%
+	count()
+
+
+
+```
+
+
+
+
+Total number of interactions in the integrated network
+```{r}
+
+part_a <- filtered_costanzo_stringent %>%
+	dplyr::select ( -genetic_interaction_score) %>%
+	rename( node_x = node_a, node_y = node_b)
+
+
+part_b <- interactions_combined %>%
+	dplyr::select ( one_of(c('oln_id_a', 'oln_id_b'))) %>%
+	rename( node_x = oln_id_a, node_y = oln_id_b)
+
+
+part_a %>% rbind(part_b) %>% 
+												mutate ( type = '') %>%
+											    t() %>% as.data.frame() %>% as.list() %>%
+												map( fix_interaction) %>%
+												ldply() %>% 
+												select ( -(.id)) %>% 
+												distinct() %>%
+												count()
+
+
+total_number_of_interactions_triplet_network_no_overlap_no_direction <- interactions_table %>% 
+												mutate ( type = '') %>%
+											    t() %>% as.data.frame() %>% as.list() %>%
+												map( fix_interaction) %>%
+												ldply() %>% 
+												select ( -(.id)) %>% 
+												distinct() %>%
+												count()
+total_number_of_interactions_triplet_network_no_overlap_no_direction
+
+
+
+
+
+
+```
+
+Genetic interactions, number of edges, number of proteins
+```{r}
+
+filtered_costanzo_stringent_2016_cleaned <- filtered_costanzo_stringent_2016 %>%
+	dplyr::select ( query_oln_id_edited, array_oln_id_edited) %>% 
+					dplyr::rename( node_x=query_oln_id_edited, node_y = array_oln_id_edited) %>%
+					dplyr::mutate( type="gi") %>%
+					as.tibble() %>%
+					t() %>%
+					as.data.frame() %>%
+					as.list() %>%
+					map(fix_interaction) %>%
+					ldply() %>% 
+					dplyr::select ( -(.id)) %>%
+					distinct()
+
+# Get number of unique edges	
+dim( filtered_costanzo_stringent_2016_cleaned)
+
+# Get number of proteins
+length( unique( c(filtered_costanzo_stringent_2016_cleaned$node_x,  filtered_costanzo_stringent_2016_cleaned$node_y) ))
+
+```
+
+Kinase substrate network 
+```{r}
+
+## Number of interactions in the kinase-substrate network
+kinase_network_cleaned <- kinase_network_collated %>% 
+	dplyr::filter( interaction_type_abbrev == 'kd') %>%
+	dplyr::select( one_of(c('oln_id_a', 'oln_id_b'))) %>%
+	distinct() 
+
+dim( kinase_network_cleaned)
+
+## count the number of kinases
+kinase_list <- kinase_network_cleaned %>%
+	dplyr::select ( one_of ( c ( 'oln_id_a'))) %>%
+	dplyr::rename( oln_id = oln_id_a) %>%
+	distinct() 
+
+count(kinase_list )
+
+## count the number of substrates 	
+
+targets_list <- kinase_network_cleaned %>%
+	dplyr::select ( one_of ( c ( 'oln_id_b'))) %>%
+	dplyr::rename( oln_id = oln_id_b) %>%
+	distinct() 
+
+substrates_excluding_kinases <- setdiff( targets_list, kinase_list) 
+
+count( substrates_excluding_kinases)
+
+``` 
+
+
+Protein interaction network
+```{r}
+
+sbi_interactome_cleaned <- sbi_interactome_collated %>% 
+	dplyr::filter( oln_id_a > oln_id_b ) %>%
+	dplyr::select( one_of(c('oln_id_a', 'oln_id_b'))) %>%
+	distinct() 
+
+dim( sbi_interactome_cleaned)
+
+length( unique( c(sbi_interactome_cleaned$oln_id_a ,  sbi_interactome_cleaned$oln_id_b )) )
+
+```
+
+Transcriptional regulatory network
+```{r}
+
+
+tf_network_collated
+
+
+## Number of interactions in the transcriptional regulatory network
+tf_network_cleaned <- tf_network_collated %>% 
+	dplyr::filter( interaction_type_abbrev == 'td') %>%
+	dplyr::select( one_of(c('oln_id_a', 'oln_id_b'))) %>%
+	distinct() 
+
+dim( tf_network_cleaned)
+
+## count the number of kinases
+tf_list <- tf_network_cleaned %>%
+	dplyr::select ( one_of ( c ( 'oln_id_a'))) %>%
+	dplyr::rename( oln_id = oln_id_a) %>%
+	distinct() 
+
+count(tf_list )
+
+## count the number of substrates 	
+
+targets_list <- tf_network_cleaned %>%
+	dplyr::select ( one_of ( c ( 'oln_id_b'))) %>%
+	dplyr::rename( oln_id = oln_id_b) %>%
+	distinct() 
+
+targets_excluding_tf <- setdiff( targets_list, tf_list) 
+
+count( targets_excluding_tf)
+
+## total number of proteins
+length( unique( c ( targets_list$oln_id , tf_list$oln_id) ))
+
+
+
+```
+
+```{r}
+# Odds ratio enrichment for transcriptional regulatory network.
+
+fisher.test ( matrix (c(3156
+,620
+,26786
+,2281), 2, 2))
+
+1/0.4334889
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

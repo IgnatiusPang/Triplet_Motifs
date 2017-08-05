@@ -1,0 +1,365 @@
+---
+title: "R Notebook"
+Date: 13-7-2016
+output:
+  html_document: default
+  html_notebook: default
+Author: Ignatius Pang
+---
+
+Description: I want to visualize the network, which consists of all the triplet motifs. Only edges in triplet motifs are shown.
+
+
+```{r}
+library(RCy3)
+library(dplyr)
+library(RODBC)
+library(sqldf)
+```
+
+
+
+
+Read helper functions 
+```{r}
+# cd '/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Poster/'
+
+## Load the root base directory for the entire project
+options <- commandArgs(trailingOnly = TRUE)
+source( "./Common/parameters_file.R")
+
+setwd ( file.path( base_directory, 'Source/Figures') ) 
+
+source( file.path ( source_directory_common, 'draw_triplet_motif_network_helper.R') ) 
+
+```
+
+Read data tables 
+```{r}
+triplet_motifs_costanzo_2016 <- read.table ( file.path( list_of_triplets_directory, "triplet_motifs_costanzo_2016.txt"), 
+											 header =TRUE , stringsAsFactors = FALSE)
+
+triplet_motifs_costanzo_2016 <- triplet_motifs_costanzo_2016 %>% 
+								dplyr::rename( oln_id_a = node_a, oln_id_b = node_b, oln_id_c = node_c)
+
+toxic_upon_overexpression <- read.table ( file.path( data_directory, "overexpressed_toxic_genes.txt"), header=TRUE , stringsAsFactors = FALSE)
+
+essential_genes <- read.table ( file.path( data_directory, "essential_genes.txt"), header=TRUE, stringsAsFactors = FALSE)
+
+cell_cycle_peak_times_of_orfs <- read.table ( file.path( data_directory, "periodically_expressed_genes.txt"), header=TRUE, stringsAsFactors = FALSE)
+
+gene_names <- read.table ( file.path(data_directory, "gene_names_table.txt"), sep="\t", header=TRUE, stringsAsFactors = FALSE, 
+						    na.strings="", quote="")
+
+
+## Results from Spatial Analysis of Functional Enrichment (SAFE tool)
+
+enriched_functions <- read.table ( file.path( results_directory, "SAFE/safe_exported_reports_20161123.txt-node_properties_annotation-highest.txt"), sep="\t", header=TRUE, stringsAsFactors = FALSE, 
+						    na.strings="", quote="")
+
+```
+
+Build phenotype master table 
+```{r}
+
+toxic_upon_overexpression <- toxic_upon_overexpression %>%
+								dplyr::select ( one_of ( c( "oln_id"))) %>%
+								dplyr::mutate ( overexpression_toxic = 1)
+
+essential_genes <- essential_genes %>%
+						dplyr::mutate ( essential = 1)
+
+
+cell_cycle_peak_times_of_orfs <- cell_cycle_peak_times_of_orfs %>%
+									dplyr::mutate ( periodically_expressed = 1)
+
+
+essential_periodic_expression_toxic_overexpression <- toxic_upon_overexpression %>%
+														full_join ( essential_genes ) %>% 
+														full_join (  cell_cycle_peak_times_of_orfs ) 
+
+
+
+essential_periodic_expression_toxic_overexpression [is.na( essential_periodic_expression_toxic_overexpression  ) ] <- 0
+
+
+essential_periodic_expression_toxic_overexpression <- essential_periodic_expression_toxic_overexpression %>%
+ 														group_by ( oln_id) %>%
+ 														summarise( overexpression_toxic = sum( overexpression_toxic), 
+ 																   essential = sum( essential), 
+ 																   periodically_expressed = sum( periodically_expressed))
+
+```
+
+Get densely annotated triplets 
+```{r}
+
+densely_annotated_triplet_motif <- sqldf( "select motifs.* 
+, data_a.essential as essential_a, data_a.periodically_expressed as periodically_expressed_a, data_a.overexpression_toxic as overexpression_toxic_a
+, data_b.essential as essential_b, data_b.periodically_expressed as periodically_expressed_b, data_b.overexpression_toxic as overexpression_toxic_b
+, data_c.essential as essential_c, data_c.periodically_expressed as periodically_expressed_c, data_c.overexpression_toxic as overexpression_toxic_c
+
+, data_a.essential + data_b.essential + data_c.essential as essential_score
+, data_a.periodically_expressed + data_b.periodically_expressed + data_c.periodically_expressed as periodically_expressed_score
+, data_a.overexpression_toxic + data_b.overexpression_toxic + data_c.overexpression_toxic as overexpression_toxic_score
+
+, case when data_a.essential = 1 and data_b.essential = 1 and data_c.essential = 1 then 1 else 0 end as essential_abc
+, case when data_a.periodically_expressed = 1 and data_b.periodically_expressed = 1 and data_c.periodically_expressed = 1 then 1 else 0 end as periodically_expressed_abc
+, case when data_a.overexpression_toxic = 1 and data_b.overexpression_toxic = 1 and data_c.overexpression_toxic = 1 then 1 else 0 end as overexpression_toxic_abc
+
+, case when data_a.essential is not null then data_a.essential else 0 end 
++ case when data_a.periodically_expressed is not null then data_a.periodically_expressed else 0 end 
++ case when data_a.overexpression_toxic is not null then data_a.overexpression_toxic else 0 end 
++ case when data_b.essential is not null then data_b.essential else 0 end   
++ case when data_b.periodically_expressed  is not null then data_b.periodically_expressed else 0 end 
++ case when data_b.overexpression_toxic  is not null then data_b.overexpression_toxic else 0 end  as score_ab
+
+, case when data_c.essential is not null then data_c.essential else 0 end 
++ case when data_c.periodically_expressed is not null then data_c.periodically_expressed else 0 end 
++ case when data_c.overexpression_toxic is not null then data_c.overexpression_toxic else 0 end as score_c
+
+from triplet_motifs_costanzo_2016  motifs
+		left outer join essential_periodic_expression_toxic_overexpression data_a
+			on data_a.oln_id = oln_id_a
+		left outer join essential_periodic_expression_toxic_overexpression data_b
+			on data_b.oln_id = oln_id_b
+		left outer join essential_periodic_expression_toxic_overexpression data_c
+			on data_c.oln_id = oln_id_c;
+", stringsAsFactors=FALSE)
+
+
+```
+
+
+
+Network of tightly regulated proteins (involved in spindle pole formation)
+```{r}
+triplet_motifs_costanzo <- sqldf( "select oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
+from densely_annotated_triplet_motif
+where ( ( type_ac = 'p' and type_bc = 'p' )
+	or  ( type_ac = 'tu' and type_bc = 'tu' ) 
+	or  ( type_ac = 'ku' and type_bc = 'ku' ) 
+	or  ( type_ac = 'p' and type_bc = 'ku' ) 
+	or  ( type_ac = 'p' and type_bc = 'td' ) 
+	or  ( type_ac = 'p' and type_bc = 'kd' ) 
+	or  ( type_ac = 'ku' and type_bc = 'p' ) 
+	or  ( type_ac = 'td' and type_bc = 'p' ) 
+	or  ( type_ac = 'kd' and type_bc = 'p' ) 	
+      ) 
+	  and score_ab >=6
+	  and score_c >=3 ;", stringsAsFactors=FALSE)
+
+triplet_motifs_costanzo <- as.data.frame ( triplet_motifs_costanzo )
+
+cw <- draw_triplet_motif_network  ( triplet_motifs_costanzo, 'Tightly regulated proteins' ) 
+
+cw <- add_node_attributes(cw, gene_names , "oln_id")
+
+cw <- add_node_attributes ( cw, enriched_functions, "Node.label.ORF")
+
+displayGraph(cw)
+	
+triplet_motif_network_display_style(cw) 
+
+redraw (cw)
+
+current_example_dir <- file.path( results_directory, "Achilles_heel/Spindle-pole body example")
+
+create_directory_if_not_exists( current_example_dir) 
+
+## saveNetwork command currently not working for unknown reasons
+#saveNetwork(cw, file.name= file.path( current_example_dir, "spindle-pole body example"), format='cys')
+
+saveImage ( cw, file.name= file.path( current_example_dir, "spindle-pole body example"), image.type='pdf')
+
+```
+
+All three proteins in the motif needs to be essential and periodically expressed 
+```{r}
+
+triplet_motifs_costanzo <- sqldf( "select distinct oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
+from densely_annotated_triplet_motif
+where ( ( type_ac = 'p'  and type_bc = 'p' )
+	or  ( type_ac = 'tu' and type_bc = 'tu' ) 
+	or  ( type_ac = 'ku' and type_bc = 'ku' ) 
+	or  ( type_ac = 'p'  and type_bc = 'ku' ) 
+	or  ( type_ac = 'p'  and type_bc = 'td' ) 
+	or  ( type_ac = 'p'  and type_bc = 'kd' ) 
+	or  ( type_ac = 'ku' and type_bc = 'p' ) 
+	or  ( type_ac = 'td' and type_bc = 'p' ) 
+	or  ( type_ac = 'kd' and type_bc = 'p' ) 	
+      ) 
+	  and essential_a = 1
+	  and essential_b = 1
+	  and essential_c = 1
+
+
+	  and periodically_expressed_a = 1
+	  and periodically_expressed_b = 1
+	  and periodically_expressed_c = 1
+
+
+except 
+
+select oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
+from densely_annotated_triplet_motif
+where ( ( type_ac = 'p' and type_bc = 'p' )
+	or  ( type_ac = 'tu' and type_bc = 'tu' ) 
+	or  ( type_ac = 'ku' and type_bc = 'ku' ) 
+	or  ( type_ac = 'p' and type_bc = 'ku' ) 
+	or  ( type_ac = 'p' and type_bc = 'td' ) 
+	or  ( type_ac = 'p' and type_bc = 'kd' ) 
+	or  ( type_ac = 'ku' and type_bc = 'p' ) 
+	or  ( type_ac = 'td' and type_bc = 'p' ) 
+	or  ( type_ac = 'kd' and type_bc = 'p' ) 	
+      ) 
+	  and score_ab >=6;", stringsAsFactors=FALSE)
+
+triplet_motifs_costanzo <- as.data.frame ( triplet_motifs_costanzo )
+
+cw <- draw_triplet_motif_network  ( triplet_motifs_costanzo, 'essential periodically expressed' ) 
+
+cw <- add_node_attributes(cw, gene_names , "oln_id")
+
+cw <- add_node_attributes ( cw, enriched_functions, "Node.label.ORF")
+
+displayGraph(cw)
+	
+triplet_motif_network_display_style(cw) 
+
+redraw (cw)
+
+current_example_dir <- file.path( results_directory, "Achilles_heel/Essential and periodically expressed")
+
+create_directory_if_not_exists( current_example_dir) 
+
+saveImage ( cw, file.name= file.path( current_example_dir, "essential and periodically expressed"), image.type='pdf')
+
+```
+
+
+Essential and toxic upon overexpression
+```{r}
+
+triplet_motifs_costanzo <- sqldf( "select distinct oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
+from densely_annotated_triplet_motif
+where ( ( type_ac = 'p' and type_bc = 'p' )
+	or  ( type_ac = 'tu' and type_bc = 'tu' ) 
+	or  ( type_ac = 'ku' and type_bc = 'ku' ) 
+	or  ( type_ac = 'p' and type_bc = 'ku' ) 
+	or  ( type_ac = 'p' and type_bc = 'td' ) 
+	or  ( type_ac = 'p' and type_bc = 'kd' ) 
+	or  ( type_ac = 'ku' and type_bc = 'p' ) 
+	or  ( type_ac = 'td' and type_bc = 'p' ) 
+	or  ( type_ac = 'kd' and type_bc = 'p' ) 	
+      ) 
+	  and essential_a = 1
+	  and essential_b = 1
+	  and essential_c = 1
+
+	  and overexpression_toxic_a = 1
+	  and overexpression_toxic_b = 1
+	  and overexpression_toxic_c = 1
+									
+except 
+
+select oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
+from densely_annotated_triplet_motif
+where ( ( type_ac = 'p'  and type_bc = 'p' )
+	or  ( type_ac = 'tu' and type_bc = 'tu' ) 
+	or  ( type_ac = 'ku' and type_bc = 'ku' ) 
+	or  ( type_ac = 'p'  and type_bc = 'ku' ) 
+	or  ( type_ac = 'p'  and type_bc = 'td' ) 
+	or  ( type_ac = 'p'  and type_bc = 'kd' ) 
+	or  ( type_ac = 'ku' and type_bc = 'p' ) 
+	or  ( type_ac = 'td' and type_bc = 'p' ) 
+	or  ( type_ac = 'kd' and type_bc = 'p' ) 	
+      ) 
+	  and score_ab >=6;", stringsAsFactors=FALSE)
+
+triplet_motifs_costanzo <- as.data.frame ( triplet_motifs_costanzo )
+
+cw <- draw_triplet_motif_network  ( triplet_motifs_costanzo, 'essential overexpression' ) 
+
+cw <- add_node_attributes(cw, gene_names , "oln_id")
+
+cw <- add_node_attributes ( cw, enriched_functions, "Node.label.ORF")
+
+displayGraph(cw)
+
+triplet_motif_network_display_style(cw) 
+
+redraw (cw)
+
+current_example_dir <- file.path( results_directory, "Achilles_heel/Essential and toxic upon overexpression")
+
+create_directory_if_not_exists( current_example_dir) 
+
+saveImage ( cw, file.name= file.path( current_example_dir, "Essential and toxic upon overexpression"), image.type='pdf')
+
+```
+
+
+
+Periodically expressed and toxic upon overexpression
+```{r}
+
+triplet_motifs_costanzo <- sqldf( "select distinct oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
+									from densely_annotated_triplet_motif
+									where ( ( type_ac = 'p' and type_bc = 'p' )
+									or  ( type_ac = 'tu' and type_bc = 'tu' ) 
+									or  ( type_ac = 'ku' and type_bc = 'ku' ) 
+									or  ( type_ac = 'p' and type_bc = 'ku' ) 
+									or  ( type_ac = 'p' and type_bc = 'td' ) 
+									or  ( type_ac = 'p' and type_bc = 'kd' ) 
+									or  ( type_ac = 'ku' and type_bc = 'p' ) 
+									or  ( type_ac = 'td' and type_bc = 'p' ) 
+									or  ( type_ac = 'kd' and type_bc = 'p' ) 	
+									) 
+									and periodically_expressed_a = 1
+									and periodically_expressed_b = 1
+									and periodically_expressed_c = 1
+
+									
+									and overexpression_toxic_a = 1
+									and overexpression_toxic_b = 1
+									and overexpression_toxic_c = 1
+
+									except 
+									
+									select oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
+									from densely_annotated_triplet_motif
+									where ( ( type_ac = 'p' and type_bc = 'p' )
+									or  ( type_ac = 'tu' and type_bc = 'tu' ) 
+									or  ( type_ac = 'ku' and type_bc = 'ku' ) 
+									or  ( type_ac = 'p' and type_bc = 'ku' ) 
+									or  ( type_ac = 'p' and type_bc = 'td' ) 
+									or  ( type_ac = 'p' and type_bc = 'kd' ) 
+									or  ( type_ac = 'ku' and type_bc = 'p' ) 
+									or  ( type_ac = 'td' and type_bc = 'p' ) 
+									or  ( type_ac = 'kd' and type_bc = 'p' ) 	
+									) 
+									and score_ab >=6;", stringsAsFactors=FALSE)
+
+triplet_motifs_costanzo <- as.data.frame ( triplet_motifs_costanzo )
+
+cw <- draw_triplet_motif_network  ( triplet_motifs_costanzo, 'periodically expressed and toxic upon overexpression' ) 
+
+cw <- add_node_attributes(cw, gene_names , "oln_id")
+
+cw <- add_node_attributes ( cw, enriched_functions, "Node.label.ORF")
+
+displayGraph(cw)
+
+triplet_motif_network_display_style(cw) 
+
+redraw (cw)
+
+current_example_dir <- file.path( results_directory, "Achilles_heel/Periodically expressed and toxic upon overexpression")
+
+create_directory_if_not_exists( current_example_dir) 
+
+saveImage ( cw, file.name= file.path( current_example_dir, "Periodically expressed and toxic upon overexpression"),
+			image.type='pdf')
+
+```
