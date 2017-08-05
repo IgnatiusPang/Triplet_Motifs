@@ -16,6 +16,7 @@ library(tidyr)
 
 
 ## Load the root base directory for the entire project
+options <- commandArgs(trailingOnly = TRUE)
 source( "./Common/parameters_file.R")
 
 data_directory <- file.path( base_directory, "Data/Triplet_Motifs_R_data") 

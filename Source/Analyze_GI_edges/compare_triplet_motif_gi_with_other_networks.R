@@ -4,13 +4,6 @@
 ### Description: Compare the genetic interaction edge in triplet motifs with other types of interactions. 
 
 #########################################################
-# Source location
-
-# psql sbi_triplet_motifs
-# cd '/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/'
-# 
-
-#########################################################
 ### Parameters 
 ### Global Parameters 
 
@@ -25,19 +18,20 @@ if ( length(options) != 0
 	source( "./parameters_file.R" )
 
 } else {
-	source( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Common/parameters_file.R")
+	source( "./Common/parameters_file.R")
 }
 
 ### Local Parameters
 observed_results_table_file   <- "observed_results_table_file.tab"
 randomized_results_table_file <- "randomized_results_table.tab"
-# output_enrichment_p_value     <- "enrichment_p_value_fixed.tab"
-# output_depletion_p_value      <- "depletion_p_value_fixed.tab"
 output_full_results_table     <- "full_results_table.tab"
 
 if (is_run_locally) {
 	
-	results_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values_temp/Analyze_GI_edges/"
+	results_directory <- file.path( results_directory, "Bootstrap_p_values_temp/Analyze_GI_edges" ) 
+	
+	create_directory_if_not_exists(final_results_directory)
+	
 }
 
 #########################################################
@@ -199,9 +193,8 @@ compare_gi_with_other_networks_final_results <- count_triplet_motifs_compare_wit
 																											  "interaction_type_abbrev", 
 																											  "count", "my_total_count")
 
-write.table ( compare_gi_with_other_networks_final_results, file=paste(results_directory, 
-																	   observed_results_table_file, 
-																	   sep=""), row.names = FALSE)
+write.table ( compare_gi_with_other_networks_final_results, file=file.path(results_directory, 
+																	   observed_results_table_file), row.names = FALSE)
 
 #########################################################
 
@@ -323,7 +316,7 @@ compare_gi_with_other_networks <- compare_gi_with_other_networks %>%
 
 randomized_results_table <- rbind_list_elements_recursively(list_of_randomized_triplet_motif_counts)
 
-write.table ( randomized_results_table, file = paste( results_directory, randomized_results_table_file, sep=""), 
+write.table ( randomized_results_table, file = file.path( results_directory, randomized_results_table_file), 
 			  row.names = FALSE)
 
 #########################################################

@@ -9,21 +9,18 @@ library(reshape2)
 ### Graphic width and heigth for the boxplots of the randomization results. The observed value is shown in a dot. 
 ### This setting is for the poster presentation.
 
-base_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/"
+options <- commandArgs(trailingOnly = TRUE)
+source( "./Common/parameters_file.R")
 
-source_directory <- paste( base_directory, "Source/", sep="")
-source_directory_common <- paste( source_directory, "Common/",  sep="")
-source( paste(source_directory_common, "count_triplet_motifs_helper.R", sep="") )
-source(  paste(source_directory_common, "concatenate_result_files.R", sep="") )
+source_directory <- file.path( base_directory, "Source")
+source_directory_common <- file.path( source_directory, "Common")
+source( file.path(source_directory_common, "count_triplet_motifs_helper.R") )
+source(  file.path(source_directory_common, "concatenate_result_files.R") )
 
-results_directory                    <- paste( base_directory, "Results/Bootstrap_p_values/Overexpressed_Toxic_Genes/", sep="")
-final_results_directory              <- paste ( results_directory, "Final_Results/", sep="")
+results_directory                    <- file.path( results_directory, "Bootstrap_p_values/Overexpressed_Toxic_Genes")
+final_results_directory              <- file.path ( results_directory, "Final_Results")
 
-	if (! file.exists(final_results_directory)){
-		dir.create(final_results_directory)
-
-	}
-
+create_directory_if_not_exists(final_results_directory)
 
 ################################################################################################################################################
 # Counts of Triplet Motifs Costanzo et al. 2010 dataset

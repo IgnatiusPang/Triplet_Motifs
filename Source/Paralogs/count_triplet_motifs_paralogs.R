@@ -23,16 +23,17 @@ if ( length(options) != 0  )  {
 		source( "./parameters_file.R" )
 
 	} else {
-		source( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Common/parameters_file.R")
+		source( "./Common/parameters_file.R")
 	}	
 } else {
-	source( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Common/parameters_file.R")
+	source( "./Common/parameters_file.R")
 }	
 
 ### Local Parameters
 if (is_run_locally) {
 
-	results_directory <- paste( base_directory, "Results/Bootstrap_p_values/Paralogs/", sep="")
+	results_directory <- file.path( results_directory, "Bootstrap_p_values/Paralogs")
+	create_directory_if_not_exists(results_directory)
 }
 
 observed_counts_orthomcl_paralogs_file	 <- "observed_counts_orthomcl_paralogs_in_tri_motifs.tab"
@@ -130,34 +131,25 @@ count_motifs_with_orthomcl_paralogs <- count_triplet_motifs_gi_against_edge_list
 count_motifs_with_orthomcl_paralogs <- transpose_count_triplet_motifs_results( count_motifs_with_orthomcl_paralogs, 
 																"type_ac", "type_bc", "count_edge_attribute", "motif_type") 	
 
-write.table( count_motifs_with_orthomcl_paralogs, file = paste( results_directory, observed_counts_orthomcl_paralogs_file, sep=""), 
+write.table( count_motifs_with_orthomcl_paralogs, file = file.path( results_directory, observed_counts_orthomcl_paralogs_file), 
 			 row.names = FALSE)
 
 
 ### Helper function to get statistics for paper.
 ## How many triplet motifs are associated with pairs of genes that are paralogs?
-# list_of_motifs_with_paralogs <- count_triplet_motifs_gi_against_edge_list_helper (triplet_motifs_costanzo, orthomcl_paralogs)
-# 	
+list_of_motifs_with_paralogs <- count_triplet_motifs_gi_against_edge_list_helper (triplet_motifs_costanzo, orthomcl_paralogs)
+list_of_motifs_with_paralogs
+
+
 # How many unique pairs of paralogs are associated with triplet motifs?
-# count_of_motifs_with_paralogs <- list_of_motifs_with_paralogs %>%
-# 								 dplyr::filter(edge_attribute == 1) %>%
-# 								 dplyr::select( one_of( c("oln_id_a", "oln_id_b") ) ) %>% 
-# 								 dplyr::distinct( oln_id_a, oln_id_b ) %>% 
-# 								 as.data.frame() %>% 
-# 								 dplyr::count()
+count_of_motifs_with_paralogs <- list_of_motifs_with_paralogs %>%
+								 dplyr::filter(edge_attribute == 1) %>%
+								 dplyr::select( one_of( c("oln_id_a", "oln_id_b") ) ) %>%
+								 dplyr::distinct( oln_id_a, oln_id_b ) %>%
+								 as.data.frame() %>%
+								 dplyr::count()
+count_of_motifs_with_paralogs
 
-
-	
-#### Analysis on SGD list of ohnologs
-
-# count_motifs_with_sgd_paralogs <-count_triplet_motifs_gi_against_edge_list( triplet_motifs_costanzo, sgd_paralogs)
-
-
-# count_motifs_with_sgd_paralogs <- transpose_count_triplet_motifs_results(count_motifs_with_sgd_paralogs, 
-																	 # "type_ac", "type_bc", "count_edge_attribute", "motif_type") 	
-
-# write.table(count_motifs_with_sgd_paralogs , file =  paste( results_directory, observed_counts_sgd_paralogs_file, sep=""), 
-			# row.names = FALSE)
 
 #########################################################
 #########################################################
@@ -198,7 +190,7 @@ randomized_counts_orthomcl_paralogs_list <- mclapply ( X=1:number_of_randomized_
 											  
 randomized_counts_orthomcl_paralogs_table <- concat_motif_counts_list_into_table( randomized_counts_orthomcl_paralogs_list) 
 
-write.table ( randomized_counts_orthomcl_paralogs_table, file = paste( results_directory, randomized_counts_orthomcl_paralogs_file, sep=""), 
+write.table ( randomized_counts_orthomcl_paralogs_table, file = paste( results_directory, randomized_counts_orthomcl_paralogs_file), 
 			  row.names = FALSE)
 
 # ###
@@ -213,7 +205,7 @@ write.table ( randomized_counts_orthomcl_paralogs_table, file = paste( results_d
 
 # randomized_counts_sgd_paralogs_table <- concat_motif_counts_list_into_table( randomized_counts_sgd_paralogs_list) 
 
-# write.table ( randomized_counts_sgd_paralogs_table, file = paste( results_directory, randomized_counts_sgd_paralogs_file, sep=""), 
+# write.table ( randomized_counts_sgd_paralogs_table, file = paste( results_directory, randomized_counts_sgd_paralogs_file), 
 # row.names = FALSE)
 
 #########################################################
@@ -222,14 +214,14 @@ write.table ( randomized_counts_orthomcl_paralogs_table, file = paste( results_d
 full_results_orthomcl_paralogs <- get_full_results_table(count_motifs_with_orthomcl_paralogs, 
 														 randomized_counts_orthomcl_paralogs_table, p.value=0.05) 
 
-write.table ( full_results_orthomcl_paralogs, file = paste( results_directory, full_results_orthomcl_paralogs_file, sep=""), 
+write.table ( full_results_orthomcl_paralogs, file = paste( results_directory, full_results_orthomcl_paralogs_file), 
 			  row.names = TRUE) 
 
 # # Write the output tables, use the p-value for two-sided test for the SGD paralogs 
 # full_results_sgd_paralogs <- get_full_results_table(count_motifs_with_sgd_paralogs, 
 													# randomized_counts_sgd_paralogs_table, p.value=0.05) 
 
-# write.table ( full_results_sgd_paralogs, file = paste( results_directory, full_results_sgd_paralogs_file, sep=""), 
+# write.table ( full_results_sgd_paralogs, file = paste( results_directory, full_results_sgd_paralogs_file), 
 			  # row.names = TRUE) 
 
 #########################################################

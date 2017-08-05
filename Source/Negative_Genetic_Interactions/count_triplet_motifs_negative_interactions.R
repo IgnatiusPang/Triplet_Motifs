@@ -24,7 +24,7 @@ if ( length(options) != 0
 			source( "./parameters_file.R" )
 
 } else {
-	source( "../Common/parameters_file.R")
+	source( "./Common/parameters_file.R")
 }
 
 ### Local Parameters
@@ -37,7 +37,9 @@ output_full_results_table             <- "full_results_table.tab"
 
 if (is_run_locally) {
 
-	results_directory <- file.path( local_base_directory, "Results/Bootstrap_p_values_temp/Negative_Genetic_Interactions/")
+	results_directory <- file.path( results_directory, "Bootstrap_p_values_temp/Negative_Genetic_Interactions")
+	
+	create_directory_if_not_exists(results_directory)
 }
 
 

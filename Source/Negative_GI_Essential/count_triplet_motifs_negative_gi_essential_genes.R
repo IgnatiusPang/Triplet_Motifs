@@ -25,13 +25,14 @@ if ( length(options) != 0
 	source( "./parameters_file.R" )
 
 } else {
-	source( "/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Common/parameters_file.R")
+	source( "./Common/parameters_file.R")
 }
 
 
 #### Local Parameters
 if (is_run_locally) {
-	results_directory <- paste ( base_directory, "Results/Bootstrap_p_values_temp/Negative_GI_Essential/",  sep="")
+	results_directory <- file.path ( results_directory, "Bootstrap_p_values_temp/Negative_GI_Essential")
+	create_directory_if_not_exists(results_directory)
 }
 
 observed_a_and_b_essential_gene_counts 	<- "observed_a_and_b_essential_gene_counts.tab"
@@ -79,10 +80,10 @@ results_count_c <- transpose_count_triplet_motifs_results(count_essential_genes_
 												"type_bc", "count_c")], 
 												"type_ac", "type_bc", "count_c", "motif_type") 
 
-write.table(results_count_a_and_b , file =  paste( results_directory, observed_a_and_b_essential_gene_counts, sep=""), 
+write.table(results_count_a_and_b , file =  file.path( results_directory, observed_a_and_b_essential_gene_counts), 
 			row.names = FALSE)
 
-write.table(results_count_c , file =  paste( results_directory, observed_c_essential_gene_counts, sep=""), 
+write.table(results_count_c , file =  file.path( results_directory, observed_c_essential_gene_counts), 
 			row.names = FALSE)
 
 
@@ -123,7 +124,7 @@ count_a_and_b_list <-  lapply ( list_of_randomized_triplet_motif_counts, functio
 													  
 randomized_count_a_and_b_table <- concat_motif_counts_list_into_table( count_a_and_b_list) 
 
-write.table ( randomized_count_a_and_b_table, file = paste( results_directory, randomized_count_a_and_b_table_file, sep=""), 
+write.table ( randomized_count_a_and_b_table, file = file.path( results_directory, randomized_count_a_and_b_table_file), 
 			  row.names = FALSE)
 
 			  
@@ -132,7 +133,7 @@ count_c_list <-   lapply ( list_of_randomized_triplet_motif_counts, function(x) 
 													  
 randomized_count_c_table <- concat_motif_counts_list_into_table( count_c_list) 
 			  
-write.table ( randomized_count_c_table, file = paste( results_directory, randomized_count_c_table_file, sep=""), 
+write.table ( randomized_count_c_table, file = file.path( results_directory, randomized_count_c_table_file), 
 			  row.names = FALSE)			  
 
 #########################################################
@@ -141,13 +142,13 @@ write.table ( randomized_count_c_table, file = paste( results_directory, randomi
 # Write the output tables, use the p-value for two-sided test for 'count gene A and gene B' 
 final_results_table_count_a_and_b <- get_full_results_table(results_count_a_and_b, randomized_count_a_and_b_table, p.value=0.05) 
 
-write.table ( final_results_table_count_a_and_b, file = paste( results_directory, output_full_results_table_count_a_and_b, sep=""), 
+write.table ( final_results_table_count_a_and_b, file = file.path( results_directory, output_full_results_table_count_a_and_b), 
 			  row.names = TRUE) 
 
 # Write the output tables, use the p-value for two-sided test for 'count gene C' 
 final_results_table_count_c <- get_full_results_table(results_count_c, randomized_count_c_table, p.value=0.05) 
 
-write.table ( final_results_table_count_c, file = paste( results_directory, output_full_results_table_count_c, sep=""), 
+write.table ( final_results_table_count_c, file = file.path( results_directory, output_full_results_table_count_c), 
 			  row.names = TRUE) 
 
 

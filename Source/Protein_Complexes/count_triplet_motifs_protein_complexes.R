@@ -22,14 +22,15 @@ if ( length(options) != 0  )  {
 		source( "./parameters_file.R" )
 
 	} else {
-		source( "/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Common/parameters_file.R")
+		source( "./Common/parameters_file.R")
 	}
 }
 
 ### Local Parameters
 if (is_run_locally) {
 
-	results_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/Protein_Complexes/"
+	results_directory <- file.path ( results_directory, "Bootstrap_p_values_temp/Protein_Complexes") 
+	create_directory_if_not_exists( results_directory)
 }
 
 observed_counts_babu_protein_complex_file        <- "observed_counts_babu_protein_complex_in_tri_motifs.tab"
@@ -62,49 +63,36 @@ my_column_names <- c( "oln_id_a",
 triplet_motifs_costanzo <- form_triplet_motifs(filtered_costanzo_stringent, interactions_combined, interactions_combined,
 											   my_join_ac, my_join_bc, my_selected_columns, my_column_names)
 
-
-##################################################################################################################################################
-#### Analysis on Babu membrane protein complexes dataset	
-# babu_motif_and_protein_complexes <- count_triplet_motifs_in_protein_complexes ( triplet_motifs_costanzo, babu_protein_complexes) 
-	
-
-# babu_protein_complex_count <- transpose_count_triplet_motifs_results(babu_motif_and_protein_complexes, 
-																# "type_ac", "type_bc", "total_count", "motif_type") 	
-
-# write.table(babu_protein_complex_count , file =  paste( results_directory, observed_counts_babu_protein_complex_file, sep=""), 
-			# row.names = FALSE)
-
-
 ##################################################################################################################################################
 ### Helper analysis to get statistics for use in paper 
-# benschop_motif_and_protein_complexes_temp <- count_triplet_motifs_in_protein_complexes_helper ( triplet_motifs_costanzo, benschop_protein_complexes)
-# 
-# benschop_motif_and_protein_complexes_temp <- as.data.frame( benschop_motif_and_protein_complexes_temp)
-# 
+benschop_motif_and_protein_complexes_temp <- count_triplet_motifs_in_protein_complexes_helper ( triplet_motifs_costanzo, benschop_protein_complexes)
+
+benschop_motif_and_protein_complexes_temp <- as.data.frame( benschop_motif_and_protein_complexes_temp)
+
 # # maps to how many protein complexes
-# length( unique( benschop_motif_and_protein_complexes_temp[, "complex_id_a"]) )
-# 
+length( unique( benschop_motif_and_protein_complexes_temp[, "complex_id_a"]) )
+
 # ## how many proteins among motifs in protein complexes
 # 
-# length( unique( c( benschop_motif_and_protein_complexes_temp[, "oln_id_a"]
-# 					, benschop_motif_and_protein_complexes_temp[, "oln_id_b"]
-# 					, benschop_motif_and_protein_complexes_temp[, "oln_id_c"] ) )  )
-# 
+length( unique( c( benschop_motif_and_protein_complexes_temp[, "oln_id_a"]
+					, benschop_motif_and_protein_complexes_temp[, "oln_id_b"]
+					, benschop_motif_and_protein_complexes_temp[, "oln_id_c"] ) )  )
+
 # # maps to how many protein complexes for pp motif
-# 
-# dplyr::filter ( benschop_motif_and_protein_complexes_temp, type_ac == 'p' & type_bc == 'p') %>%
-# 	dplyr::select ( one_of ( c("complex_id_a"))) %>%
-# 	dplyr::distinct() %>%
-# 	dplyr::count()
-# 
+
+dplyr::filter ( benschop_motif_and_protein_complexes_temp, type_ac == 'p' & type_bc == 'p') %>%
+	dplyr::select ( one_of ( c("complex_id_a"))) %>%
+	dplyr::distinct() %>%
+	dplyr::count()
+
 # ## how many proteins among pp motifs in protein complexes
-# benschop_motif_pp <- dplyr::filter ( benschop_motif_and_protein_complexes_temp, type_ac == 'p' & type_bc == 'p')
-# 
-# ( dplyr::select (benschop_motif_pp,  one_of ( c("oln_id_a"))) %>% rename( oln_id = oln_id_a) )  %>%
-# dplyr::union( dplyr::select (benschop_motif_pp,  one_of ( c("oln_id_b"))) %>% rename( oln_id = oln_id_b) ) %>%
-# dplyr::union( dplyr::select (benschop_motif_pp,  one_of ( c("oln_id_c"))) %>% rename( oln_id = oln_id_c) )  %>%
-# dplyr::distinct() %>%
-# dplyr::count()	
+benschop_motif_pp <- dplyr::filter ( benschop_motif_and_protein_complexes_temp, type_ac == 'p' & type_bc == 'p')
+
+( dplyr::select (benschop_motif_pp,  one_of ( c("oln_id_a"))) %>% rename( oln_id = oln_id_a) )  %>%
+dplyr::union( dplyr::select (benschop_motif_pp,  one_of ( c("oln_id_b"))) %>% rename( oln_id = oln_id_b) ) %>%
+dplyr::union( dplyr::select (benschop_motif_pp,  one_of ( c("oln_id_c"))) %>% rename( oln_id = oln_id_c) )  %>%
+dplyr::distinct() %>%
+dplyr::count()
 
 ##################################################################################################################################################
 #### Analysis on Benschop core protein complexes dataset	
@@ -116,7 +104,7 @@ benschop_motif_and_protein_complexes <- count_triplet_motifs_in_protein_complexe
 benschop_protein_complex_count <- transpose_count_triplet_motifs_results(benschop_motif_and_protein_complexes, 
 																	 "type_ac", "type_bc", "total_count", "motif_type") 	
 
-write.table(benschop_protein_complex_count , file =  paste( results_directory, observed_counts_benschop_protein_complex_file, sep=""), 
+write.table(benschop_protein_complex_count , file =  file.path( results_directory, observed_counts_benschop_protein_complex_file), 
 			row.names = FALSE)
 
 
@@ -159,7 +147,7 @@ mc.reset.stream()
 											  
 # randomized_counts_babu_protein_complex_table <- concat_motif_counts_list_into_table( randomized_counts_babu_protein_complex_list) 
 
-# write.table ( randomized_counts_babu_protein_complex_table, file = paste( results_directory, randomized_counts_babu_protein_complex_file, sep=""), 
+# write.table ( randomized_counts_babu_protein_complex_table, file = file.path( results_directory, randomized_counts_babu_protein_complex_file), 
 			  # row.names = FALSE)
 
 			  
@@ -177,31 +165,31 @@ randomized_counts_benschop_protein_complex_list <- mclapply ( X=1:number_of_rand
 
 randomized_counts_benschop_protein_complex_table <- concat_motif_counts_list_into_table( randomized_counts_benschop_protein_complex_list) 
 
-write.table ( randomized_counts_benschop_protein_complex_table, file = paste( results_directory, randomized_counts_benschop_protein_complex_file, sep=""), 
+write.table ( randomized_counts_benschop_protein_complex_table, file = file.path( results_directory, randomized_counts_benschop_protein_complex_file), 
 			  row.names = FALSE)
 
 #########################################################
 # 
 # temp_results_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/Protein_Complexes/"
 # 
-# benschop_protein_complex_count 					<- read.table ( paste( temp_results_directory, 
-# 															 			 "observed_counts_benschop_protein_complex_in_tri_motifs.tab" , sep="" ) , header=TRUE)
+# benschop_protein_complex_count 					<- read.table ( file.path( temp_results_directory, 
+# 															 			 "observed_counts_benschop_protein_complex_in_tri_motifs.tab"  ) , header=TRUE)
 # 
-# randomized_counts_benschop_protein_complex_table  <- read.table ( paste( temp_results_directory, 
-# 																		 "randomized_counts_benschop_protein_complex_in_tri_motifs.tab" , sep="" ) , header=TRUE)
+# randomized_counts_benschop_protein_complex_table  <- read.table ( file.path( temp_results_directory, 
+# 																		 "randomized_counts_benschop_protein_complex_in_tri_motifs.tab"  ) , header=TRUE)
 
 # # Write the output tables, use the p-value for two-sided test for the Babu membrane protein complexes dataset
 # full_results_babu_protein_complex <- get_full_results_table(babu_protein_complex_count, 
 															# randomized_counts_babu_protein_complex_table, p.value=0.05) 
 
-# write.table ( full_results_babu_protein_complex, file = paste( results_directory, full_results_babu_protein_complex_file, sep=""), 
+# write.table ( full_results_babu_protein_complex, file = file.path( results_directory, full_results_babu_protein_complex_file), 
 			  # row.names = TRUE) 
 
 # Write the output tables, use the p-value for two-sided test for the Benschop protein complexes dataset
 full_results_benschop_protein_complex <- get_full_results_table(benschop_protein_complex_count, 
 																randomized_counts_benschop_protein_complex_table, p.value=0.05) 
 
-write.table ( full_results_benschop_protein_complex, file = paste( results_directory, full_results_benschop_protein_complex_file, sep=""), 
+write.table ( full_results_benschop_protein_complex, file = file.path( results_directory, full_results_benschop_protein_complex_file), 
 			  row.names = TRUE) 
 
 #########################################################

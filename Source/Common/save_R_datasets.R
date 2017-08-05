@@ -9,15 +9,14 @@ library(lazyeval)
 # Description: Transfer data from the SQL database into text file so it can be uploaded into R for data analysis without database connection.
 
 
-# cd '/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Common/'
 # Rscript --vanilla save_R_datasets.R 
 
 #################################################################################################################
 
-# options <- commandArgs(trailingOnly = TRUE)
 
-data_directory <- "/home/ignatius/PostDoc/2017/Triplet_Motifs_Public/Data/Triplet_Motifs_R_data"
-source_directory <- "/home/ignatius/PostDoc/2017/Triplet_Motifs_Public/Source"
+options <- commandArgs(trailingOnly = TRUE)
+source( "./Common/parameters_file.R")
+
 
 source_directory_common  <- file.path( source_directory, "Common")
 

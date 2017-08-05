@@ -15,7 +15,6 @@ sessionInfo()
 # Source location
 
 # psql sbi_triplet_motifs
-# cd '/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/'
 # Rscript --vanilla count_triplet_motifs_random_edges.R local 0.5 1 1 1  
 
 #########################################################
@@ -28,22 +27,24 @@ if ( length(options) != 0  )  {
 		source( "./parameters_file.R" )
 	} else {
 		print ('Load parameter file locally.')
-		source( "/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Common/parameters_file.R")
+		source( "./Common/parameters_file.R")
 	}
 	
 } else {
 	print ('Load parameter file locally.')
-	source( "/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Common/parameters_file.R")
+	source( "./Common/parameters_file.R")
 }
 
 source_directory_random_edges <- "./"
 
 if (is_run_locally) {
-	results_directory <- paste( base_directory, "Results/Bootstrap_p_values/Random_Edges/", sep="")
-	source_directory_random_edges <- paste( source_directory, "Random_Edges/", sep="")
+	results_directory <- file.path( results_directory, "Bootstrap_p_values_temp/Random_Edges")
+	source_directory_random_edges <- file.path( source_directory, "Random_Edges")
+	
+	create_directory_if_not_exists(results_directory)
 }
 
-source( paste (source_directory_random_edges, "random_edges_helper.R", sep="" ))
+source( file.path (source_directory_random_edges, "random_edges_helper.R" ))
 
 ### Local Parameters
 
@@ -245,14 +246,14 @@ if ( 'before_randomization' %in% names(list_of_randomized_triplet_motif_counts[[
 	
 	before_randomization_table <- concat_motif_counts_list_into_table( before_randomization_list)
 	
-	write.table ( before_randomization_table, file = paste( results_directory, before_randomization_counts_file, sep=""),
+	write.table ( before_randomization_table, file = file.path( results_directory, before_randomization_counts_file),
 				  row.names = FALSE)
 
 	after_randomization_list <-  lapply ( list_of_randomized_triplet_motif_counts, function(x) {return( x$after_randomization )} )
 	
 	after_randomization_table <- concat_motif_counts_list_into_table( after_randomization_list)
 	
-	write.table ( after_randomization_table, file = paste( results_directory, after_randomization_counts_file, sep=""),
+	write.table ( after_randomization_table, file = file.path( results_directory, after_randomization_counts_file),
 				  row.names = FALSE)
 	
 } else {

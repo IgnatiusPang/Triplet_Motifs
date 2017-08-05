@@ -13,8 +13,8 @@ library(tibble)
 library(dplyr)
 library(ggplot2)
 
- base_directory <- "/home/ignatius/PostDoc/2016/Triplet_Motifs/"
-# base_directory <- "/home/ignatius/Documents/Postdoc/2016/Triplet_Motifs/"
+options <- commandArgs(trailingOnly = TRUE)
+source( "./Common/parameters_file.R")
 
 data_directory <- file.path( base_directory, "Data/Triplet_Motifs_R_data") 
 

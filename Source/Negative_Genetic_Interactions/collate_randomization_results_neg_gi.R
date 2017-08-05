@@ -10,20 +10,20 @@ library(reshape2)
 
 ## Load all the parameters 
 options <- commandArgs(trailingOnly = TRUE)
-source( "../Common/parameters_file.R")
+source( "./Common/parameters_file.R")
 
 
 ### Graphic width and heigth for the boxplots of the randomization results. The observed value is shown in a dot. 
 ### This setting is for the poster presentation.
 false_positive_rates <- 0.02
 
-source_directory <- paste( base_directory, "Source/", sep="")
-source_directory_common <- paste( source_directory, "Common/",  sep="")
-source( paste(source_directory_common, "count_triplet_motifs_helper.R", sep="") )
-source(  paste(source_directory_common, "concatenate_result_files.R", sep="") )
+source_directory <- file.path( base_directory, "Source")
+source_directory_common <- file.path( source_directory, "Common")
+source( file.path(source_directory_common, "count_triplet_motifs_helper.R") )
+source(  file.path(source_directory_common, "concatenate_result_files.R") )
 
-results_directory                    <- paste( base_directory, "Results/Bootstrap_p_values/Negative_Genetic_Interactions/", sep="")
-final_results_directory              <- paste ( results_directory, "Final_Results/", sep="")
+results_directory                    <- file.path( base_directory, "Results/Bootstrap_p_values/Negative_Genetic_Interactions")
+final_results_directory              <- file.path ( results_directory, "Final_Results")
 
 ################################################################################################################################################
 

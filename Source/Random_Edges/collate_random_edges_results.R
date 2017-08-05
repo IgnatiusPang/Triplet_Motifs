@@ -3,13 +3,21 @@ library(dplyr)
 library(ggplot2)
 library(lazyeval)
 
-source('/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Random_Edges/collate_random_edges_results_helper.R')
-source('/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Poster/reshape_triplet_motifs_helper.R')
+
+options <- commandArgs(trailingOnly = TRUE)
+source( "./Common/parameters_file.R")
+
+
+source( file.path ( source_directory, 'Random_Edges/collate_random_edges_results_helper.R')) 
+source( file.path( source_directory, 'Figures/reshape_triplet_motifs_helper.R') )
 
 ### Directories
-results_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/Random_Edges/"
+results_directory <- file.path ( results_directory, "Bootstrap_p_values/Random_Edges" ) 
+final_results_directory <- file.path ( results_directory, "Final_Results")
 
-final_results_directory <- paste ( results_directory, "Final_Results/", sep="")
+create_directory_if_not_exists(results_directory)
+create_directory_if_not_exists(final_results_directory)
+
 
 ### Size of resulting plot 
 graphic_width  <- 10 
@@ -84,7 +92,7 @@ randomization_collated_counts <- rbind( before_randomization_collated_counts, af
 
 randomization_collated_counts[, 'motif_type'] <- convert_triplet_motifs_name_to_paper_style( randomization_collated_counts[, 'motif_type'])
 
-write.table ( randomization_collated_counts, file=paste ( final_results_directory, "randomization_collated_counts.txt", sep=""))
+write.table ( randomization_collated_counts, file=file.path ( final_results_directory, "randomization_collated_counts.txt"))
 
 
 #####################################################################################################################################
@@ -97,7 +105,7 @@ stat_test_result_random_edges <- random_edges_statstical_testing(randomization_c
 
 stat_test_result_random_edges[, 'motif_type'] <- convert_triplet_motifs_name_to_paper_style( stat_test_result_random_edges[, 'motif_type'])
 
-write.table ( stat_test_result_random_edges, file=paste ( final_results_directory, "stat_test_result_random_edges.txt", sep=""))
+write.table ( stat_test_result_random_edges, file=file.path ( final_results_directory, "stat_test_result_random_edges.txt"))
 
 ### The trend is that the number of triplet motifs will get less, but there are still likely to be significant differences with a random network. 
 

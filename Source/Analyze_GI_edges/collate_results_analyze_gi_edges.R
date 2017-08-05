@@ -9,21 +9,21 @@ library(reshape2)
 ### Graphic width and heigth for the boxplots of the randomization results. The observed value is shown in a dot. 
 ### This setting is for the poster presentation.
 
-base_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/"
+## Set the parameters for this project
+options <- commandArgs(trailingOnly = TRUE)
+source( "./Common/parameters_file.R")
 
-source_directory <- paste( base_directory, "Source/", sep="")
-source_directory_common <- paste( source_directory, "Common/",  sep="")
-source_poster_directory <- paste( source_directory, "Poster/", sep="")
-source( paste(source_directory_common, "count_triplet_motifs_helper.R", sep="") )
-source( paste(source_directory_common, "concatenate_result_files.R", sep="") )
-source( paste(source_poster_directory, "reshape_triplet_motifs_helper.R", sep="") )
+source_directory <- file.path( base_directory, "Source")
+source_directory_common <- file.path( source_directory, "Common")
+source_poster_directory <- file.path( source_directory, "Poster")
+source( file.path(source_directory_common, "count_triplet_motifs_helper.R") )
+source( file.path(source_directory_common, "concatenate_result_files.R") )
+source( file.path(source_poster_directory, "reshape_triplet_motifs_helper.R") )
 
-results_directory       <- paste( base_directory, "Results/Bootstrap_p_values/Analyze_GI_edges/", sep="")
-final_results_directory <- paste ( results_directory, "Final_Results/", sep="")
+results_directory       <- file.path( base_directory, "Results/Bootstrap_p_values/Analyze_GI_edges")
+final_results_directory <- file.path ( results_directory, "Final_Results")
 
-	if (! file.exists(final_results_directory)){
-		dir.create(final_results_directory)
-	}
+create_directory_if_not_exists(final_results_directory)
 
 ################################################################################################################################################
 ### Helper functions 
@@ -60,7 +60,7 @@ false_positive_rates 			     <- 0.02  # If the observed data is less than two pe
 number_to_use_for_bonferroni_adjustment <- 36
 
 ### Observed
-count_triplet_motifs_observed 		<- read.table ( paste( results_directory, observed_file_pattern, sep=""), 
+count_triplet_motifs_observed 		<- read.table ( file.path( results_directory, observed_file_pattern), 
 												header=TRUE )
 
 count_triplet_motifs_observed <- fix_table_column_names(count_triplet_motifs_observed) 
@@ -203,10 +203,10 @@ analyze_gi_edges_counts_gathered[, "edge_type"] <- factor ( analyze_gi_edges_cou
 
 #################################################################################################################################################
 
-write.table ( joined_table_summarized_filtered, file=paste( final_results_directory, triplet_motifs_full_results_file, sep=""), 
+write.table ( joined_table_summarized_filtered, file=file.path( final_results_directory, triplet_motifs_full_results_file), 
 			  row.names=FALSE, quote=FALSE )
 
-write.table ( analyze_gi_edges_counts_gathered, file=paste( final_results_directory, count_triplet_motifs_randomized_file, sep=""), 
+write.table ( analyze_gi_edges_counts_gathered, file=file.path( final_results_directory, count_triplet_motifs_randomized_file), 
 			  row.names=FALSE, quote=FALSE )
 
 #################################################################################################################################################
@@ -239,7 +239,6 @@ ggplot_analyze_gi_edges +
 
  ggsave(file.path(final_results_directory, "analyze_gi_edges_wrap.tiff"), plot=last_plot(), width=10, height=7 )
 
-# ggsave(file.path("~/Desktop/", "analyze_gi_edges_wrap.tiff"), plot=last_plot(), width=10, height=7 )
 
 
 #################################################################################################################################################

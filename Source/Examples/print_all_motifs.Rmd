@@ -12,9 +12,8 @@ Description: I want to convert each of the 15 triplet motifs into an edge list, 
 library(RCy3)
 library(dplyr)
 
-# source_directory_common <- "/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Common/"
-source_directory_common <- "/home/ignatius/Documents/Postdoc/2016/Triplet_Motifs/Source/Common/"
-
+options <- commandArgs(trailingOnly = TRUE)
+source( "./Common/parameters_file.R")
 
 source( file.path ( source_directory_common, 'draw_triplet_motif_network_helper.R') ) 
 

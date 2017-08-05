@@ -33,13 +33,14 @@ if ( length(options) != 0
 	source( "./parameters_file.R" )
 
 } else {
-	source( "/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Common/parameters_file.R")
+	source( "./Common/parameters_file.R")
 }
 
 
 ### Local Parameters
 if (is_run_locally) {
-	results_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values_temp/Cell_Cycle/"
+	results_directory <- file.path( results_directory, "Bootstrap_p_values_temp/Cell_Cycle") 
+	create_directory_if_not_exists(results_directory)
 }
 
 # output_observed_triplet_motif_counts <- "results_count_triplet_motifs_costanzo.tab" # "results_count_triplet_motifs_costanzo.tab"
