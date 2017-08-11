@@ -16,7 +16,7 @@ source_directory_common <- paste( source_directory, "Common/",  sep="")
 source( paste(source_directory_common, "count_triplet_motifs_helper.R", sep="") )
 source(  paste(source_directory_common, "concatenate_result_files.R", sep="") )
 
-results_directory                    <- paste( base_directory, "Results/Bootstrap_p_values/Repeated_GI_in_Motifs/", sep="")
+results_directory                    <- paste( base_directory, "Results/Bootstrap_p_values/Unique_GI_in_Motifs/", sep="")
 final_results_directory              <- paste ( results_directory, "Final_Results/", sep="")
 
 	if (! file.exists(final_results_directory)){

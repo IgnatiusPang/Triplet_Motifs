@@ -19,11 +19,11 @@
 ### To check he status of array jobs, this is the command:
 # qstat  -t -n1 -u z3371724
 
-PROJECT_DIRECTORY=Unique_GI_in_Motifs
-MAIN_SCRIPT="count_triplet_motifs_repeated_gi_edges.R"
+PROJECT_DIRECTORY=Overlapping_Triplet_Motifs
+MAIN_SCRIPT="count_overlapping_triplet_motifs.R"
+LOG_PREFIX="count_overlapping_triplet_motifs.R"
 HPC_CLUSTER="katana"
 NUM_RANDOM_TRIALS=50
-LOG_PREFIX="count_triplet_motifs_repeated_gi_edges"
 
 if [ $HPC_CLUSTER = 'clive' ] 
 then 

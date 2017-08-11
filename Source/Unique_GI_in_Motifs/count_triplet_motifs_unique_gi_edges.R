@@ -23,14 +23,15 @@ if ( length(options) != 0  )  {
 		source( "./parameters_file.R" )
 
 	} else {
-		source( "/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Common/parameters_file.R")
+		source( "./Source/Common/parameters_file.R")
 	}
 }
 
 ### Local Parameters
 if (is_run_locally) {
 
-	results_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/Unique_GI_in_Motifs/"
+	results_directory <- "./Results/Bootstrap_p_values_temp/Unique_GI_in_Motifs/"
+	create_directory_if_not_exists(results_directory)
 }
 
 observed_counts_unique_gi_pairs_in_motifs_file <- "observed_counts_unique_gi_pairs_in_motifs.tab"

@@ -18,7 +18,7 @@ if ( length(options) != 0  )  {
 ### Local Parameters
 if (is_run_locally) {
 	
-	results_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/Unique_GI_in_Motifs/"
+	results_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/Repeated_GI_in_Motifs/"
 }
 
 #########################################################
@@ -38,12 +38,5 @@ count_motif_per_negative_gi <- triplet_motifs_costanzo_edited %>%
 
 count_motif_per_negative_gi_spread <- count_motif_per_negative_gi %>% 
 										spread( motif_type, count)
-	
 
 #########################################################
-
-
-
-
-
-
