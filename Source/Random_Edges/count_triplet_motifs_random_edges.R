@@ -77,10 +77,7 @@ if ( length(options) != 0
 	}
 }
 
-
 print ( paste ( "proportion_of_original_network_size_gi_network =", proportion_of_original_network_size_gi_network))
-
-
 
 before_randomization_counts_file <- paste( "random_edges_before_randomization_counts_", proportion_of_original_network_size_gi_network, "_", 
 										   proportion_of_original_network_size_kinase_network, "_", 

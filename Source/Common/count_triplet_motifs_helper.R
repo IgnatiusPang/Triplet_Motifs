@@ -1370,6 +1370,70 @@ count_triplet_motifs_unique_gi_pairs <- function (triplet_motifs ) {
 }
 
 
+#########################################################
+
+# Count the number of genetic interactions associated with different types of triplet motifs (e.g. triplets = pp, pku, pkd, kuku, tutu, ptd)
+count_overlapping_triplet_motifs <- function (triplet_motifs ) {
+	
+	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
+		group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise(counts_level=n()) %>%
+		group_by( type_ac, type_bc) %>%
+		dplyr::summarise(counts=n()) %>%
+		ungroup( type_ac, type_bc) %>%
+		dplyr::filter( counts > 1) %>%
+		dplyr::mutate (  motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
+		dplyr::select( one_of( c("motif_type", "counts") )) 
+	
+	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
+		group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise(counts_level=n()) %>%
+		group_by( type_ac, type_bc) %>%
+		dplyr::summarise(counts=n()) %>%
+		ungroup( type_ac, type_bc) %>%
+		dplyr::rename ( type_ac= type_bc, type_bc = type_ac) %>%
+		dplyr::select( one_of( c("type_ac", "type_bc", "counts") )) %>%
+		dplyr::filter( counts > 1) %>%
+		dplyr::mutate (  motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
+		dplyr::select( one_of( c("motif_type", "counts") )) 
+	
+	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
+		group_by( motif_type) %>% 
+		dplyr::summarise(total_count=sum(counts)) %>%
+		dplyr::arrange( motif_type)
+	
+	return( triplet_motif_counts)
+}
+
+# Group different triplet motifs together 
+group_triplet_motifs_by_type <- function ( motif_type) {
+	
+	if ( motif_type %in% c( "kuku", 'pkd', 'pku' )) {
+		return ( 'signaling_triplets')
+	} else if ( motif_type %in% c( "tdp", "tutu" )) {
+		return ( 'regulatory_triplets')
+	} else if ( motif_type %in% c( "pp" )) {
+		return ( 'protein_complexes')
+	} else {
+		return ( 'others')
+	}
+
+}
+
+
+# Transpose the results from the 'count_overlapping_triplet_motifs' function
+transpose_count_overlapping_triplet_motifs_results <- function (triplet_motif_counts,  total_count, motif_type) {
+	
+	triplet_motif_counts <- triplet_motif_counts[, c(motif_type, total_count)]
+	
+	colnames_to_use <- as.vector ( t( triplet_motif_counts[, motif_type] ))
+	
+	triplet_motif_counts <- t( triplet_motif_counts[,  total_count])
+	
+	colnames( triplet_motif_counts) <- colnames_to_use
+	
+	return( triplet_motif_counts)
+}
 
 #########################################################
 

@@ -212,12 +212,12 @@ ggsave(file.path(figures_results_directory, "orthomcl_paralogs_not_randomize_gi.
 #### Repeated GI
 
 repeated_gi_full <- read.table ( file.path( computational_results_directory,
-											"Repeated_GI_in_Motifs/Final_Results/full_results_counts_unique_gi_pairs_in_motifs.tab"), header =TRUE)
+											"Unique_GI_in_Motifs/Final_Results/full_results_counts_unique_gi_pairs_in_motifs.tab"), header =TRUE)
 
 repeated_gi_random   <- read.table ( file.path( computational_results_directory,
-													  "Repeated_GI_in_Motifs/Final_Results/randomized_counts_unique_gi_pairs_in_motifs.tab"), header =TRUE)
+													  "Unique_GI_in_Motifs/Final_Results/randomized_counts_unique_gi_pairs_in_motifs.tab"), header =TRUE)
 repeated_gi_observed <- read.table ( file.path( computational_results_directory,
-													  "Repeated_GI_in_Motifs/Job_1/observed_counts_unique_gi_pairs_in_motifs.tab"), header =TRUE)
+													  "Unique_GI_in_Motifs/Job_1/observed_counts_unique_gi_pairs_in_motifs.tab"), header =TRUE)
 
 print_box_plot_observed_vs_random(repeated_gi_observed, repeated_gi_random, repeated_gi_full, significant_types_of_motifs,
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
