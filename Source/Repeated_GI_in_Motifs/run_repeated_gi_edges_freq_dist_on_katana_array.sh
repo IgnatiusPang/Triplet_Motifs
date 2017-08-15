@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N TriMoRepGI[]
+#PBS -N TMRepGIFeq[]
 #PBS -l nodes=1:ppn=16
 #PBS -l vmem=100gb
 #PBS -l walltime=12:00:00
@@ -19,9 +19,9 @@
 ### To check he status of array jobs, this is the command:
 # qstat  -t -n1 -u z3371724
 
-PROJECT_DIRECTORY=Repeated_GI_in_Motifs
-MAIN_SCRIPT="count_repeated_gi_in_motifs.R"
-LOG_PREFIX="count_repeated_gi_in_motifs"
+PROJECT_DIRECTORY=Repeated_GI_in_Motifs_Freq_Dist
+MAIN_SCRIPT="count_repeated_gi_in_motifs_freq_distribution.R"
+LOG_PREFIX="count_repeated_gi_freq_dist"
 HPC_CLUSTER="katana"
 NUM_RANDOM_TRIALS=50
 

@@ -5,11 +5,11 @@
 ##                 * Compare observed value and frequency distribution of random values using box plots.
 ##				   * Compare observed value and the average values from randomization analyses using bar plots.  
 
-# cd '/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Poster'
+# cd '/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Figures'
 
 base_directory <- "/home/ignatius/PostDoc/2016/Triplet_Motifs"
 
-setwd ( '/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Poster/')
+setwd ( '/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Figures/')
 
 library(dplyr)
 library(tidyr)
@@ -19,7 +19,7 @@ library(reshape2)
 
 #####################################################################								 
 
-source( file.path ( base_directory, 'Source/Poster/reshape_triplet_motifs_helper.R') )
+source( file.path ( base_directory, 'Source/Figures/reshape_triplet_motifs_helper.R') )
 
 computational_results_directory <- file.path ( base_directory, "Results/Bootstrap_p_values") 
 figures_results_directory       <- file.path ( base_directory, "Results/Poster/Figures" ) 
@@ -63,19 +63,18 @@ negative_interactions_full <- read.table ( file= file.path( computational_result
 										   "Negative_Genetic_Interactions/Final_Results/full_results_triplet_motifs_costanzo_2016_collated.tab") )
 
 rows_to_include  <-  (negative_interactions_full[, "observed_counts"] > sum ( negative_interactions_full[, "observed_counts"] ) * false_positive_rates)  &
-	(negative_interactions_full[, "enrichment_adj_p_values"]  < 0.05)
+					 (negative_interactions_full[, "enrichment_adj_p_values"]  < 0.05)
 
 rows_to_include <- ifelse ( is.na(rows_to_include), FALSE, rows_to_include)
 
 significant_types_of_motifs <- dplyr::arrange ( negative_interactions_full[rows_to_include, ], desc( observed_counts ) ) %>%
-	dplyr::select ( one_of ( c( "motif_type"))) %>% 
-	as.data.frame() %>%  
-	t() %>% 
-	as.vector()
+							   dplyr::select ( one_of ( c( "motif_type"))) %>% 
+							   as.data.frame() %>%  
+							   t() %>% 
+							   as.vector()
 
 ## Convert motif names to paper format
 significant_types_of_motifs <- convert_triplet_motifs_name_to_paper_style( significant_types_of_motifs ) 
-
 
 # ################################################################################################
 
@@ -209,7 +208,7 @@ ggsave(file.path(figures_results_directory, "orthomcl_paralogs_not_randomize_gi.
 
 
 ################################################################################################
-#### Repeated GI
+#### Unique GI
 
 repeated_gi_full <- read.table ( file.path( computational_results_directory,
 											"Unique_GI_in_Motifs/Final_Results/full_results_counts_unique_gi_pairs_in_motifs.tab"), header =TRUE)
@@ -231,6 +230,7 @@ ggsave(file.path(figures_results_directory, "repeated_gi.tiff"), plot=last_plot(
 # random_data <- repeated_gi_random
 # ordering <- NULL
 # motifs_to_include <- significant_types_of_motifs
+
 
 ################################################################################################
 #### Periodic gene expression
@@ -302,6 +302,7 @@ print_box_plot_observed_vs_random(overexpression_c_observed, overexpression_c_ra
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour )
 
 ggsave(file.path(figures_results_directory, "overexpression_c.tiff"), plot=last_plot(), width=graphic_width, height=graphic_height )
+
 
 # ################################################################################################
 

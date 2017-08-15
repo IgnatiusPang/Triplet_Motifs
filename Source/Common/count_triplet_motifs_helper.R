@@ -109,8 +109,8 @@ collate_interactions_from_both_direction_tbl_df <- function (input_table, gene_a
 	
 	
 	new_table <- dplyr::bind_rows( left_table, right_table) %>% 
-		distinct () %>% 
-		arrange_( .dots=lapply (c(col_a, col_b), as.name))
+		dplyr::distinct() %>% 
+		dplyr::arrange_( .dots=lapply (c(col_a, col_b), as.name))
 
 	
 	return(new_table)
@@ -212,9 +212,9 @@ form_triplet_motifs <- function (table_a, table_b, table_c, join_ac, join_bc, se
   
 	old_column_names <- colnames(table_a)
 	
-	table_a <- tbl_df(table_a)
-	table_b <- tbl_df(table_b)
-	table_c <- tbl_df(table_c)
+	table_a <- dplyr::tbl_df(table_a)
+	table_b <- dplyr::tbl_df(table_b)
+	table_c <- dplyr::tbl_df(table_c)
 	
 	temp_merged_table <- dplyr::inner_join( table_a, table_b, by= join_ac )  
 	
@@ -223,7 +223,7 @@ form_triplet_motifs <- function (table_a, table_b, table_c, join_ac, join_bc, se
 	
 	# print ( paste ( colnames(temp_merged_table) )) 
 	
-	temp_merged_table <- inner_join( temp_merged_table, table_c, by= join_bc )
+	temp_merged_table <- dplyr::inner_join( temp_merged_table, table_c, by= join_bc )
 	
 	if( my_debug == 1) { print ( paste( "count(temp_merged_table) =", count(temp_merged_table)[[1]]) ) }
 	
@@ -234,7 +234,7 @@ form_triplet_motifs <- function (table_a, table_b, table_c, join_ac, join_bc, se
 	
 	if( my_debug == 1) { print ( paste( "count(triplet_motifs) =", count(triplet_motifs)[[1]]) ) }
 	
-	a_gt_b <- filter_( triplet_motifs, paste(column_names[1], ">", column_names[2] )   )
+	a_gt_b <- dplyr::filter_( triplet_motifs, paste(column_names[1], ">", column_names[2] )   )
 	
 	if( my_debug == 1) { print ( paste( "count(a_gt_b) =", count(a_gt_b)[[1]]) ) }
 	
@@ -242,14 +242,14 @@ form_triplet_motifs <- function (table_a, table_b, table_c, join_ac, join_bc, se
 	
 	## I would like to switch to using standard evalualtion of names, because this allows more flexibility in table names
 	
-	b_gt_a <- filter_( triplet_motifs, paste(column_names[2], ">", column_names[1] )   ) %>%
-		rename_( .dots=setNames(as.list(column_names[1:5]), updated_column_names ) ) %>%
+	b_gt_a <- dplyr::filter_( triplet_motifs, paste(column_names[2], ">", column_names[1] )   ) %>%
+		dplyr::rename_( .dots=setNames(as.list(column_names[1:5]), updated_column_names ) ) %>%
 		dplyr::select( one_of(column_names))
 
 	if( my_debug == 1) { print ( paste( "count(b_gt_a) =",count(b_gt_a)[[1]]) )}
 	
 	
-	triplet_motifs <- dplyr::union(a_gt_b, b_gt_a )  %>%
+	triplet_motifs <- union(a_gt_b, b_gt_a )  %>%
 						dplyr::group_by_( .dots=lapply ( column_names[1:5], as.name) ) %>%
 						dplyr::summarise_(max_gi_score =  interp(~max(var), var = as.name(column_names[6])) )  %>%
 						dplyr::rename_(.dots=setNames(list("max_gi_score"),c(column_names[6])))  %>%
@@ -285,23 +285,23 @@ form_triplet_motifs <- function (table_a, table_b, table_c, join_ac, join_bc, se
 
 count_triplet_motifs_custom <- function (triplet_motifs, type_ac, type_bc, total_count ) {
 	
-	a_ge_b <- filter_( triplet_motifs, paste(type_ac, ">=", type_bc) ) %>%
-				group_by_( .dots=lapply ( c(type_ac, type_bc), as.name)  ) %>%
-				summarise(counts=n())
+	a_ge_b <- dplyr::filter_( triplet_motifs, paste(type_ac, ">=", type_bc) ) %>%
+				dplyr::group_by_( .dots=lapply ( c(type_ac, type_bc), as.name)  ) %>%
+				dplyr::summarise(counts=n())
 	
 	columns_to_select <- c(type_ac, type_bc, "counts")
 	
-	b_gt_a <- filter_( triplet_motifs, paste(type_bc, ">", type_ac) ) %>%
-				group_by_( .dots=lapply ( c(type_ac, type_bc), as.name) ) %>%
-				summarise(counts=n()) %>%
+	b_gt_a <- dplyr::filter_( triplet_motifs, paste(type_bc, ">", type_ac) ) %>%
+				dplyr::group_by_( .dots=lapply ( c(type_ac, type_bc), as.name) ) %>%
+				dplyr::summarise(counts=n()) %>%
 				dplyr::rename_( .dots=setNames(list(type_ac, type_bc), c(type_bc, type_ac) ) ) %>%
-				select( one_of( columns_to_select ))
+				dplyr::select( one_of( columns_to_select ))
 
-	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
-		group_by_( .dots=lapply ( c(type_ac, type_bc), as.name) ) %>%	
-		summarise( temp_counts=sum(counts))  %>%
+	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by_( .dots=lapply ( c(type_ac, type_bc), as.name) ) %>%	
+		dplyr::summarise( temp_counts=sum(counts))  %>%
 		dplyr::rename_( .dots=setNames(list("temp_counts"), c(total_count) ) ) %>%
-		arrange_( .dots=c(type_ac, type_bc) )
+		dplyr::arrange_( .dots=c(type_ac, type_bc) )
 	
 
 	return( triplet_motif_counts)
@@ -327,20 +327,20 @@ count_triplet_motifs_custom <- function (triplet_motifs, type_ac, type_bc, total
 
 count_triplet_motifs <- function (triplet_motifs ) {
 
-	a_ge_b <- filter( triplet_motifs, type_ac >= type_bc ) %>%
-		group_by( type_ac, type_bc) %>%
-		summarise(counts=n())
+	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
+		dplyr::group_by( type_ac, type_bc) %>%
+		dplyr::summarise(counts=n())
 	
-	b_gt_a <- filter( triplet_motifs, type_bc > type_ac ) %>%
-		group_by( type_ac, type_bc) %>%
-		summarise(counts=n()) %>%
-		rename ( type_ac= type_bc, type_bc = type_ac) %>%
-		select( one_of( c("type_ac", "type_bc", "counts") ))
+	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
+		dplyr::group_by( type_ac, type_bc) %>%
+		dplyr::summarise(counts=n()) %>%
+		dplyr::rename( type_ac= type_bc, type_bc = type_ac) %>%
+		dplyr::select( one_of( c("type_ac", "type_bc", "counts") ))
 	
-	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
-		group_by( type_ac, type_bc) %>% 
-		summarise(total_count=sum(counts)) %>%
-		arrange( type_ac, type_bc)
+	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by( type_ac, type_bc) %>% 
+		dplyr::summarise(total_count=sum(counts)) %>%
+		dplyr::arrange( type_ac, type_bc)
 	
 	return( triplet_motif_counts)
 	
@@ -362,7 +362,7 @@ transpose_count_triplet_motifs_results <- function (triplet_motif_counts,  type_
 	## Remove columns type_ac and type_bc, and put motif_type column into the first column, the rest of the columns contain the counts for each triplet motif, then transpose the table
 
 	mutate_dots <- ~paste(type_ac, type_bc, sep="")
-	triplet_motif_counts <- mutate_(triplet_motif_counts, .dots=setNames(list(mutate_dots), c(motif_type) ) )
+	triplet_motif_counts <- dplyr::mutate_(triplet_motif_counts, .dots=setNames(list(mutate_dots), c(motif_type) ) )
 	triplet_motif_counts <- triplet_motif_counts[, c(motif_type, total_count)]
 	
 	colnames_to_use <- as.vector ( t( triplet_motif_counts[, motif_type] ))
@@ -453,17 +453,17 @@ clean_genetic_interactions_table <- function (graph_table,  col_a, col_b, score 
 	
 	columns_selected <- c(col_a, col_b, score)
 		
-	a_ge_b <- filter_(graph_table, paste( col_a, ">=", col_b) ) %>%
+	a_ge_b <- dplyr::filter_(graph_table, paste( col_a, ">=", col_b) ) %>%
 		dplyr::select( one_of(columns_selected)) 
 	
-	b_gt_a <- filter_(graph_table, paste( col_b, ">", col_a) ) 
+	b_gt_a <- dplyr::filter_(graph_table, paste( col_b, ">", col_a) ) 
 		#print ( colnames( a_ge_b) )
 		#print( colnames( b_gt_a ) )
 		#print ( as.data.frame( b_gt_a[1,]) )
-		print ( summarize(a_ge_b,   count = n())   )
-	    print ( summarize(b_gt_a,   count = n())   )
+		print ( dplyr::summarize(a_ge_b,   count = n())   )
+	    print ( dplyr::summarize(b_gt_a,   count = n())   )
 
-	b_gt_a <-	rename_(b_gt_a, .dots=setNames(list(col_a, col_b), c(col_b, col_a) ) )  %>%
+	b_gt_a <-	dplyr::rename_(b_gt_a, .dots=setNames(list(col_a, col_b), c(col_b, col_a) ) )  %>%
 		dplyr::select( one_of(columns_selected))
 	
 		#print( colnames( b_gt_a ) )
@@ -471,7 +471,7 @@ clean_genetic_interactions_table <- function (graph_table,  col_a, col_b, score 
 	
 	summarise_dots <- interp(~max(var), var = as.name(score))  #  ~mean(counts) 
 	
-	regularized_table <- dplyr::union( a_ge_b, b_gt_a ) # %>% 
+	regularized_table <- union( a_ge_b, b_gt_a ) # %>% 
 	regularized_table <- dplyr::group_by_(regularized_table, .dots=lapply ( c(col_a, col_b), as.name) ) # %>%
 	regularized_table <- dplyr::summarise_(regularized_table, .dots=setNames(list(summarise_dots), c(score))  ) # %>%
 	regularized_table <- dplyr::ungroup(regularized_table)
@@ -538,14 +538,14 @@ clean_graph_table <- function (graph_table,  col_a, col_b, directed=FALSE ) {
 	regularized_table <- graph_table
 	
 	if ( directed==FALSE) { 
-		a_ge_b <- filter_(graph_table, paste( col_a, ">=", col_b) ) %>% 
+		a_ge_b <- dplyr::filter_(graph_table, paste( col_a, ">=", col_b) ) %>% 
 			dplyr::select( one_of( c(col_a, col_b) ))
 			
-		b_gt_a <- filter_(graph_table, paste( col_b, ">", col_a) ) %>% 
-			rename_( .dots=setNames(list(col_a, col_b), c(col_b, col_a) ) )  %>% 
+		b_gt_a <- dplyr::filter_(graph_table, paste( col_b, ">", col_a) ) %>% 
+			dplyr::rename_( .dots=setNames(list(col_a, col_b), c(col_b, col_a) ) )  %>% 
 			dplyr::select( one_of( c(col_a, col_b) ))
 		
-		regularized_table <- dplyr::union( a_ge_b, b_gt_a ) # %>% 
+		regularized_table <- union( a_ge_b, b_gt_a ) # %>% 
 		regularized_table <- dplyr::select(regularized_table, one_of( c(col_a, col_b) )) # %>%
 		regularized_table <- dplyr::distinct(regularized_table ) 
 	} else {
@@ -742,12 +742,12 @@ controllability_of_rewired_network <- function (kinase_network, sbi_interactome,
 ## Shuffle the rows of the input table, without replacement.
 ## Input: A data frame table
 ## Output: 
-## Returns the shuffled table. Cast to a 'tibble' data frame using the dplyr::tbl_df function. 
+## Returns the shuffled table. Cast to a 'tibble' data frame using the tbl_df function. 
 ## Please refer to the tibble and dplyr libraries for more information.
 
 shuffle_table <- function (input_table) {
 	
-	input_table <- tbl_df(input_table)
+	input_table <- dplyr::tbl_df(input_table)
 	
 	shuffled_indicies <- sample(1:count(input_table)[[1]], count(input_table)[[1]], replace = FALSE)
 	
@@ -782,7 +782,7 @@ concat_motif_counts_list_into_table <- function (list_of_randomized_triplet_moti
 		# Start renaming from second element in the list 
 		for ( i in 2:length(list_of_randomized_triplet_motif_counts)) {
 	
-				temp_table <- dplyr::full_join ( temp_table, as.data.frame(list_of_randomized_triplet_motif_counts[[i]]), by=c("type_ac", "type_bc"))
+				temp_table <- dplyr::full_join( temp_table, as.data.frame(list_of_randomized_triplet_motif_counts[[i]]), by=c("type_ac", "type_bc"))
 				
 				## Need to keep renaming the columns 2 to i, otherwise the join will not work properly as it gets the 'my_total_count.x' and 'my_total_count.y'
 				## from the table joins confused. 
@@ -792,7 +792,7 @@ concat_motif_counts_list_into_table <- function (list_of_randomized_triplet_moti
 	}
 		
 	## Mutate: this concatenate the columns type_ac and type_bc into one column called 'motif_type'
-	temp_table <- mutate(temp_table, motif_type=paste(type_ac, type_bc, sep=""))
+	temp_table <- dplyr::mutate(temp_table, motif_type=paste(type_ac, type_bc, sep=""))
 	
 	## Remove columns type_ac and type_bc, and put motif_type column into the first column, the rest of the columns contain the counts for each triplet motif
 	# temp_table <- temp_table[, c("motif_type", as.character(1:length(list_of_randomized_triplet_motif_counts)))]
@@ -824,8 +824,8 @@ concat_motif_counts_list_into_table <- function (list_of_randomized_triplet_moti
 
 calculate_boostrap_p_values <- function( observed_counts_table, randomized_counts_table ) {
 
-	observed_counts_table <- tbl_df(as.data.frame( observed_counts_table) )
-	randomized_counts_table <- tbl_df(as.data.frame ( randomized_counts_table) )
+	observed_counts_table <- dplyr::tbl_df(as.data.frame( observed_counts_table) )
+	randomized_counts_table <- dplyr::tbl_df(as.data.frame ( randomized_counts_table) )
 	num_randomization_trials <- nrow(randomized_counts_table)
 	
 	list_of_columns_to_test <- unique ( c(colnames( observed_counts_table), colnames(randomized_counts_table) ) )
@@ -882,8 +882,8 @@ get_full_results_table <- function (observed_counts_table, randomized_counts_tab
 	
 	randomized_counts_table[is.na(randomized_counts_table)] <- 0 
 	
-	observed_counts_table <- tbl_df(as.data.frame( observed_counts_table) )
-	randomized_counts_table <- tbl_df(as.data.frame ( randomized_counts_table) )
+	observed_counts_table <- dplyr::tbl_df(as.data.frame( observed_counts_table) )
+	randomized_counts_table <- dplyr::tbl_df(as.data.frame ( randomized_counts_table) )
 	
 	## Calculate bootstrap p-value
 	bootstrap_p_values <- calculate_boostrap_p_values( observed_counts_table, randomized_counts_table ) 
@@ -906,39 +906,39 @@ get_full_results_table <- function (observed_counts_table, randomized_counts_tab
 	observed_counts_table_updated <- tibble::rownames_to_column(observed_counts_table_updated, "motif_type")
 	
 	# Calculate the mean and sd of triplet motifs counts among the randomized network
-	bootstrap_mean <- as.data.frame(t( round(summarise_each ( randomized_counts_table, funs(mean) ) ) )) %>% tibble::rownames_to_column("motif_type")
+	bootstrap_mean <- as.data.frame(t( round(summarise_all ( randomized_counts_table, funs(mean) ) ) )) %>% tibble::rownames_to_column("motif_type")
 	colnames( bootstrap_mean)[2] <- "mean"
 	
-	bootstrap_sd   <- as.data.frame(t(  round(summarise_each ( randomized_counts_table, funs(sd) ) ) ) ) %>% tibble::rownames_to_column("motif_type")
+	bootstrap_sd   <- as.data.frame(t(  round(summarise_all ( randomized_counts_table, funs(sd) ) ) ) ) %>% tibble::rownames_to_column("motif_type")
 	colnames( bootstrap_sd)[2] <- "sd"
 	
-	bootstrap_median   <- as.data.frame(t(  round(summarise_each ( randomized_counts_table, funs(median) ) ) ) ) %>% tibble::rownames_to_column("motif_type")
+	bootstrap_median <- as.data.frame(t(  round(summarise_all ( randomized_counts_table, funs(median) ) ) ) ) %>% tibble::rownames_to_column("motif_type")
 	colnames( bootstrap_median)[2] <- "median"
 	
-	bootstrap_mad   <- as.data.frame(t(  round(summarise_each ( randomized_counts_table, funs(mad) ) ) ) ) %>% tibble::rownames_to_column("motif_type")
+	bootstrap_mad    <- as.data.frame(t(  round(summarise_all ( randomized_counts_table, funs(mad) ) ) ) ) %>% tibble::rownames_to_column("motif_type")
 	colnames( bootstrap_mad)[2] <- "mad"
 	
 	# Count how many values are not NA
 	my_count_values <- function(x) {  length(which(!is.na(x)))}
 	
-	bootstrap_count   <- as.data.frame(t(  summarise_each ( randomized_counts_table, funs(my_count_values)  ) ) )  %>% 
+	bootstrap_count   <- as.data.frame(t(  summarise_all ( randomized_counts_table, funs(my_count_values)  ) ) )  %>% 
 						 tibble::rownames_to_column("motif_type")
 	colnames( bootstrap_count)[2] <- "count"
 
 	# Join all the able together
-	final_table_joined <- full_join ( observed_counts_table_updated, bootstrap_p_values_enriched_updated, by="motif_type") %>%
-		full_join ( bootstrap_p_values_depleted_updated, by="motif_type")  %>%
-		full_join ( bootstrap_mean, by="motif_type")  %>%
-		full_join ( bootstrap_sd, by="motif_type")  %>%
-		full_join ( bootstrap_median, by="motif_type")  %>%
-		full_join ( bootstrap_mad, by="motif_type")  %>%
-		full_join (bootstrap_count, by="motif_type")  %>%
-		arrange(motif_type) 
+	final_table_joined <- dplyr::full_join( observed_counts_table_updated, bootstrap_p_values_enriched_updated, by="motif_type") %>%
+						  dplyr::full_join( bootstrap_p_values_depleted_updated, by="motif_type")  %>%
+						  dplyr::full_join( bootstrap_mean, by="motif_type")    %>%
+						  dplyr::full_join( bootstrap_sd, by="motif_type")      %>%
+						  dplyr::full_join( bootstrap_median, by="motif_type")  %>%
+						  dplyr::full_join( bootstrap_mad, by="motif_type")     %>%
+						  dplyr::full_join( bootstrap_count, by="motif_type")   %>%
+						  dplyr::arrange(motif_type) 
 	
 	# Some triplet motifs do not have observed counts and only appear in full outer join
 	final_table_joined[ is.na(final_table_joined[, "observed_counts"]), "observed_counts"]	 <- 0
 	
-	final_table_joined <-	mutate(final_table_joined, ratio=round(observed_counts/mean,2) )
+	final_table_joined <-	dplyr::mutate(final_table_joined, ratio=round(observed_counts/mean,2) )
 	
 	return( final_table_joined )
 }
@@ -1005,7 +1005,7 @@ run_one_randomized_trial_compare_with_dataset <- function (run_number, filtered_
 														   rewired_interactions_combined,
 														   my_join_ac, my_join_bc, my_selected_columns, my_column_names)
 	
-	## Counts of motifs in rewired network, filtering on the dataset provided as input as comparison. 
+	## Counts of motifs in rewired network, dplyr::filtering on the dataset provided as input as comparison. 
 	
 	if ( use_rewired_interactions == FALSE){
 		rewired_counts_motifs_compare_with_dataset <- FUNCT ( rewired_triplet_motifs_costanzo,  ...) 
@@ -1048,14 +1048,12 @@ run_one_randomized_trial_random_edges <- function (x, filtered_costanzo_stringen
 														   rewired_interactions_combined,
 														   my_join_ac, my_join_bc, my_selected_columns, my_column_names)
 	
-	## Counts of motifs in rewired network, filtering on the dataset provided as input as comparison. 
+	## Counts of motifs in rewired network, dplyr::filtering on the dataset provided as input as comparison. 
 	rewired_counts_motifs_compare_with_dataset <- FUNCT ( rewired_triplet_motifs_costanzo, ...) 
 	
 	return( rewired_counts_motifs_compare_with_dataset )
 	
 }
-
-
 
 #########################################################
 
@@ -1080,61 +1078,61 @@ run_one_randomized_trial_random_edges <- function (x, filtered_costanzo_stringen
 count_triplet_motifs_against_gene_list <- function(triplet_motifs_list, gene_list) {
 	
 	## Make sure triplet_motifs_list is ungrouped
-	triplet_motifs_list <- ungroup(triplet_motifs_list)
+	triplet_motifs_list <- dplyr::ungroup(triplet_motifs_list)
 	
 	## Join the table for essential genes, so that we can count the number of essential genes in each column
 	gene_list_edited <- as.data.frame( cbind( oln_id=gene_list, is_in_gene_list=rep(1, length(gene_list[,1]) ) ))
 	
-	triplet_motif_and_gene_lists <- left_join ( triplet_motifs_list, gene_list_edited, by=c("oln_id_a" = "oln_id"))  %>% 
-		rename( oln_id_a_attribute=is_in_gene_list) %>%
-		left_join (  gene_list_edited, by=c("oln_id_b" = "oln_id")) %>% 
-		rename( oln_id_b_attribute=is_in_gene_list) %>%
-		left_join (  gene_list_edited, by=c("oln_id_c" = "oln_id")) %>% 
-		rename( oln_id_c_attribute=is_in_gene_list) 
+	triplet_motif_and_gene_lists <- dplyr::left_join( triplet_motifs_list, gene_list_edited, by=c("oln_id_a" = "oln_id"))  %>% 
+		dplyr::rename( oln_id_a_attribute=is_in_gene_list) %>%
+		dplyr::left_join(  gene_list_edited, by=c("oln_id_b" = "oln_id")) %>% 
+		dplyr::rename( oln_id_b_attribute=is_in_gene_list) %>%
+		dplyr::left_join(  gene_list_edited, by=c("oln_id_c" = "oln_id")) %>% 
+		dplyr::rename( oln_id_c_attribute=is_in_gene_list) 
 	
 	## count_a_and_b: If the attribute is found in either gene A or gene B of the triplet motif, I will count this as 1
 	## count_c: If the attribute is found in gene C of the triplet motif, I will count this as 1
 	
 
 	### Do this for protein C
-	a_ge_b <- filter( triplet_motif_and_gene_lists, type_ac >= type_bc ) %>%
+	a_ge_b <- dplyr::filter( triplet_motif_and_gene_lists, type_ac >= type_bc ) %>%
 		dplyr::distinct( type_ac, type_bc, oln_id_c, oln_id_c_attribute) %>%
 		dplyr::group_by( type_ac, type_bc) %>%
 		dplyr::summarise( count_c = sum( ifelse(is.na(oln_id_c_attribute),0,1)))
 	
-	b_gt_a <- filter( triplet_motif_and_gene_lists, type_bc > type_ac ) %>%
+	b_gt_a <- dplyr::filter( triplet_motif_and_gene_lists, type_bc > type_ac ) %>%
 		dplyr::distinct( type_ac, type_bc, oln_id_c, oln_id_c_attribute) %>%
 		dplyr::group_by( type_ac, type_bc) %>%
 		dplyr::summarise(  count_c = sum( ifelse(is.na(oln_id_c_attribute),0,1)))  %>%
-		dplyr::rename ( type_ac= type_bc, type_bc = type_ac) 
+		dplyr::rename(  type_ac= type_bc, type_bc = type_ac) 
 	
-	count_genes_in_motifs_protein_c <- dplyr::union( a_ge_b, b_gt_a)  %>%
-		group_by( type_ac, type_bc) %>% 
-		summarise(count_c=sum(count_c)) %>%
-		arrange( type_ac, type_bc)
+	count_genes_in_motifs_protein_c <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by( type_ac, type_bc) %>% 
+		dplyr::summarise(count_c=sum(count_c)) %>%
+		dplyr::arrange( type_ac, type_bc)
 	
 	
 	### Do this for protein A and B
-	a_ge_b_AB <- filter( triplet_motif_and_gene_lists, type_ac >= type_bc ) %>%
+	a_ge_b_AB <- dplyr::filter( triplet_motif_and_gene_lists, type_ac >= type_bc ) %>%
 		dplyr::distinct( type_ac, type_bc, oln_id_a, oln_id_b, oln_id_a_attribute, oln_id_b_attribute) %>%
 		dplyr::group_by( type_ac, type_bc) %>%
 		dplyr::summarise( count_a_and_b=sum(ifelse(is.na(oln_id_a_attribute) & is.na(oln_id_b_attribute),0,1)) )
 	
-	b_gt_a_AB <- filter( triplet_motif_and_gene_lists, type_bc > type_ac ) %>%
+	b_gt_a_AB <- dplyr::filter( triplet_motif_and_gene_lists, type_bc > type_ac ) %>%
 		dplyr::distinct( type_ac, type_bc, oln_id_a, oln_id_b, oln_id_a_attribute, oln_id_b_attribute) %>%
 		dplyr::group_by( type_ac, type_bc) %>%
 		dplyr::summarise( count_a_and_b=sum(ifelse(is.na(oln_id_a_attribute) & is.na(oln_id_b_attribute),0,1)) )  %>%
-		dplyr::rename ( type_ac= type_bc, type_bc = type_ac) 
+		dplyr::rename(  type_ac= type_bc, type_bc = type_ac) 
 	
-	count_genes_in_motifs_protein_a_and_b <- dplyr::union( a_ge_b_AB, b_gt_a_AB)  %>%
-		group_by( type_ac, type_bc) %>% 
-		summarise( count_a_and_b=sum(count_a_and_b) ) %>%
-		arrange( type_ac, type_bc)
+	count_genes_in_motifs_protein_a_and_b <- union( a_ge_b_AB, b_gt_a_AB)  %>%
+		dplyr::group_by( type_ac, type_bc) %>% 
+		dplyr::summarise( count_a_and_b=sum(count_a_and_b) ) %>%
+		dplyr::arrange( type_ac, type_bc)
 	
 	
-	count_genes_in_motifs <- full_join ( count_genes_in_motifs_protein_a_and_b, count_genes_in_motifs_protein_c, 
+	count_genes_in_motifs <- dplyr::full_join( count_genes_in_motifs_protein_a_and_b, count_genes_in_motifs_protein_c, 
 										 by=c("type_ac" = "type_ac", "type_bc" = "type_bc"))   %>%
-							  arrange( type_ac, type_bc)
+							  dplyr::arrange( type_ac, type_bc)
 	
 	return( count_genes_in_motifs)		
 }
@@ -1145,13 +1143,13 @@ count_triplet_motifs_against_gene_list <- function(triplet_motifs_list, gene_lis
 
 count_triplet_motifs_in_protein_complexes_helper <- function ( triplet_motifs_list, protein_complexes) {
 	
-	motif_and_protein_complexes <- left_join ( triplet_motifs_list, protein_complexes, by=c("oln_id_a" = "oln_id") ) %>%
-		rename( complex_id_a = complex_id) %>%
-		left_join ( protein_complexes, by=c("oln_id_b" = "oln_id") ) %>%
-		rename( complex_id_b = complex_id) %>%
-		left_join ( protein_complexes, by=c("oln_id_c" = "oln_id") ) %>%
-		rename( complex_id_c = complex_id) %>%
-		dplyr::filter ( complex_id_a == complex_id_b & complex_id_b == complex_id_c) 
+	motif_and_protein_complexes <- dplyr::left_join( triplet_motifs_list, protein_complexes, by=c("oln_id_a" = "oln_id") ) %>%
+		dplyr::rename( complex_id_a = complex_id) %>%
+		dplyr::left_join( protein_complexes, by=c("oln_id_b" = "oln_id") ) %>%
+		dplyr::rename( complex_id_b = complex_id) %>%
+		dplyr::left_join( protein_complexes, by=c("oln_id_c" = "oln_id") ) %>%
+		dplyr::rename( complex_id_c = complex_id) %>%
+		dplyr::filter( complex_id_a == complex_id_b & complex_id_b == complex_id_c) 
 	
 	return ( motif_and_protein_complexes)
 }
@@ -1175,20 +1173,20 @@ count_triplet_motifs_in_protein_complexes <- function ( triplet_motifs_list, pro
 	motif_and_protein_complexes <- count_triplet_motifs_in_protein_complexes_helper ( triplet_motifs_list, protein_complexes) 
 
 	# 
-	# motif_and_protein_complexes <- left_join ( triplet_motifs_list, protein_complexes, by=c("oln_id_a" = "oln_id") ) %>%
-	# 	rename( complex_id_a = complex_id) %>%
-	# 	left_join ( protein_complexes, by=c("oln_id_b" = "oln_id") ) %>%
-	# 	rename( complex_id_b = complex_id) %>%
-	# 	left_join ( protein_complexes, by=c("oln_id_c" = "oln_id") ) %>%
-	# 	rename( complex_id_c = complex_id) %>%
+	# motif_and_protein_complexes <- dplyr::left_join( triplet_motifs_list, protein_complexes, by=c("oln_id_a" = "oln_id") ) %>%
+	# 	dplyr::rename( complex_id_a = complex_id) %>%
+	# 	dplyr::left_join( protein_complexes, by=c("oln_id_b" = "oln_id") ) %>%
+	# 	dplyr::rename( complex_id_b = complex_id) %>%
+	# 	dplyr::left_join( protein_complexes, by=c("oln_id_c" = "oln_id") ) %>%
+	# 	dplyr::rename( complex_id_c = complex_id) %>%
 	# 	dplyr::filter ( complex_id_a == complex_id_b & complex_id_b == complex_id_c) %>%
 	# 
 	
 		## This following two lines ensure that we don't double count protien complexes. 
 		## Sometimes, all three proteins can be found in more than one complexes.
 		motif_and_protein_complexes <- motif_and_protein_complexes %>% 
-				select(oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc) %>%
-				distinct() %>%
+				dplyr::select(oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc) %>%
+				dplyr::distinct() %>%
 				count_triplet_motifs()
 	
 	return ( motif_and_protein_complexes)
@@ -1202,18 +1200,18 @@ count_triplet_motifs_gi_against_edge_list_helper <- function (triplet_motifs_lis
 	
 	edge_list_updated <- cbind ( edge_list, edge_attribute=rep ( 1, length(edge_list[,1])) )
 	
-	triplet_motif_and_edge_lists <- left_join ( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_a", "oln_id_b" = "oln_id_b") ) %>%
-		union ( left_join ( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a") ) ) %>%
-		distinct()
+	triplet_motif_and_edge_lists <- dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_a", "oln_id_b" = "oln_id_b") ) %>%
+		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a") ) ) %>%
+		dplyr::distinct()
 	
-	a_ge_b <- filter( triplet_motif_and_edge_lists, oln_id_a >= oln_id_b ) %>%
+	a_ge_b <- dplyr::filter( triplet_motif_and_edge_lists, oln_id_a >= oln_id_b ) %>%
 		dplyr::distinct( oln_id_a, oln_id_b, type_ac, type_bc,  edge_attribute) 
 	
-	b_gt_a <- filter( triplet_motif_and_edge_lists, oln_id_b > oln_id_a ) %>%
+	b_gt_a <- dplyr::filter( triplet_motif_and_edge_lists, oln_id_b > oln_id_a ) %>%
 		dplyr::distinct( oln_id_a, oln_id_b, type_ac, type_bc,  edge_attribute) %>%
-		dplyr::rename ( oln_id_a= oln_id_b, oln_id_b = oln_id_a ) 
+		dplyr::rename(  oln_id_a= oln_id_b, oln_id_b = oln_id_a ) 
 	
-	edges_in_motifs <- dplyr::union( a_ge_b, b_gt_a)  
+	edges_in_motifs <- union( a_ge_b, b_gt_a)  
 	
 	return( edges_in_motifs)	
 }
@@ -1246,25 +1244,25 @@ count_triplet_motifs_gi_against_edge_list <- function (triplet_motifs_list, edge
 	
 	edge_list_updated <- cbind ( edge_list, edge_attribute=rep ( 1, length(edge_list[,1])) )
 	
-	triplet_motif_and_edge_lists <- left_join ( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_a", "oln_id_b" = "oln_id_b") ) %>%
-		union ( left_join ( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a") ) ) %>%
-		distinct()
+	triplet_motif_and_edge_lists <- dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_a", "oln_id_b" = "oln_id_b") ) %>%
+		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a") ) ) %>%
+		dplyr::distinct()
 
-	a_ge_b <- filter( triplet_motif_and_edge_lists, type_ac >= type_bc ) %>%
+	a_ge_b <- dplyr::filter( triplet_motif_and_edge_lists, type_ac >= type_bc ) %>%
 		dplyr::distinct( type_ac, type_bc, oln_id_a, oln_id_b, edge_attribute) %>%
 		dplyr::group_by( type_ac, type_bc) %>%
 		dplyr::summarise( count_edge_attribute=sum(ifelse(is.na(edge_attribute), 0, 1))   )
 	
-	b_gt_a <- filter( triplet_motif_and_edge_lists, type_bc > type_ac ) %>%
+	b_gt_a <- dplyr::filter( triplet_motif_and_edge_lists, type_bc > type_ac ) %>%
 		dplyr::distinct( type_ac, type_bc, oln_id_a, oln_id_b, edge_attribute) %>%
 		dplyr::group_by( type_ac, type_bc) %>%
 		dplyr::summarise( count_edge_attribute=sum(ifelse(is.na(edge_attribute), 0, 1)) ) %>%
-		dplyr::rename ( type_ac= type_bc, type_bc = type_ac ) 
+		dplyr::rename(  type_ac= type_bc, type_bc = type_ac ) 
 	
-	count_edges_in_motifs <- dplyr::union( a_ge_b, b_gt_a)  %>%
-		group_by( type_ac, type_bc) %>% 
-		summarise(count_edge_attribute=sum(count_edge_attribute) ) %>%
-		arrange( type_ac, type_bc)
+	count_edges_in_motifs <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by( type_ac, type_bc) %>% 
+		dplyr::summarise(count_edge_attribute=sum(count_edge_attribute) ) %>%
+		dplyr::arrange( type_ac, type_bc)
 	
 	return( count_edges_in_motifs)	
 	
@@ -1295,30 +1293,30 @@ count_triplet_motifs_non_gi_edges_against_edge_list <- function (triplet_motifs_
 	
 	edge_list_updated <- cbind ( edge_list, edge_attribute=rep ( 1, length(edge_list[,1])) )
 	
-	triplet_motif_and_edge_lists <- left_join ( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_a", "oln_id_c" = "oln_id_b") ) %>%
-		union ( left_join ( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_c" = "oln_id_a") ) ) %>%
-		union ( left_join ( triplet_motifs_list, edge_list_updated, by=c("oln_id_b" = "oln_id_a", "oln_id_c" = "oln_id_b") ) ) %>%
-		union ( left_join ( triplet_motifs_list, edge_list_updated, by=c("oln_id_b" = "oln_id_b", "oln_id_c" = "oln_id_a") ) ) %>%
-		distinct()
+	triplet_motif_and_edge_lists <- dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_a", "oln_id_c" = "oln_id_b") ) %>%
+		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_c" = "oln_id_a") ) ) %>%
+		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_b" = "oln_id_a", "oln_id_c" = "oln_id_b") ) ) %>%
+		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_b" = "oln_id_b", "oln_id_c" = "oln_id_a") ) ) %>%
+		dplyr::distinct()
 	
 	## count_a_and_b: If the attribute is found in either gene A or gene B of the triplet motif, I will count this as 1
 	## count_c: If the attribute is found in gene C of the triplet motif, I will count this as 1
 	
-	a_ge_b <- filter( triplet_motif_and_edge_lists, type_ac >= type_bc ) %>%
+	a_ge_b <- dplyr::filter( triplet_motif_and_edge_lists, type_ac >= type_bc ) %>%
 		dplyr::distinct( type_ac, type_bc, oln_id_a, oln_id_b, edge_attribute) %>%
 		dplyr::group_by( type_ac, type_bc) %>%
 		dplyr::summarise( count_edge_attribute=sum(ifelse(is.na(edge_attribute),0,1))   )
 	
-	b_gt_a <- filter( triplet_motif_and_edge_lists, type_bc > type_ac ) %>%
+	b_gt_a <- dplyr::filter( triplet_motif_and_edge_lists, type_bc > type_ac ) %>%
 		dplyr::distinct( type_ac, type_bc, oln_id_a, oln_id_b, edge_attribute) %>%
 		dplyr::group_by( type_ac, type_bc) %>%
 		dplyr::summarise( count_edge_attribute=sum(ifelse(is.na(edge_attribute), 0,1 )) )  %>%
-		dplyr::rename ( type_ac= type_bc, type_bc = type_ac) 
+		dplyr::rename(  type_ac= type_bc, type_bc = type_ac) 
 	
-	count_edges_in_motifs <- dplyr::union( a_ge_b, b_gt_a)  %>%
-		group_by( type_ac, type_bc) %>% 
-		summarise(count_edge_attribute=sum(count_edge_attribute) ) %>%
-		arrange( type_ac, type_bc)
+	count_edges_in_motifs <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by( type_ac, type_bc) %>% 
+		dplyr::summarise(count_edge_attribute=sum(count_edge_attribute) ) %>%
+		dplyr::arrange( type_ac, type_bc)
 	
 	return( count_edges_in_motifs)	
 	
@@ -1347,24 +1345,24 @@ count_triplet_motifs_non_gi_edges_against_edge_list <- function (triplet_motifs_
 
 count_triplet_motifs_unique_gi_pairs <- function (triplet_motifs ) {
 	
-	a_ge_b <- filter( triplet_motifs, type_ac >= type_bc ) %>%
-		group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
-		summarise(counts_level=n()) %>%
-		group_by( type_ac, type_bc) %>%
-		summarise(counts=n())
+	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
+		dplyr::group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise(counts_level=n()) %>%
+		dplyr::group_by( type_ac, type_bc) %>%
+		dplyr::summarise(counts=n())
 	
-	b_gt_a <- filter( triplet_motifs, type_bc > type_ac ) %>%
-		group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
-		summarise(counts_level=n()) %>%
-		group_by( type_ac, type_bc) %>%
-		summarise(counts=n()) %>%
-		rename ( type_ac= type_bc, type_bc = type_ac) %>%
-		select( one_of( c("type_ac", "type_bc", "counts") ))
+	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
+		dplyr::group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise(counts_level=n()) %>%
+		dplyr::group_by( type_ac, type_bc) %>%
+		dplyr::summarise(counts=n()) %>%
+		dplyr::rename(  type_ac= type_bc, type_bc = type_ac) %>%
+		dplyr::select( one_of( c("type_ac", "type_bc", "counts") ))
 	
-	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
-		group_by( type_ac, type_bc) %>% 
-		summarise(total_count=sum(counts)) %>%
-		arrange( type_ac, type_bc)
+	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by( type_ac, type_bc) %>% 
+		dplyr::summarise(total_count=sum(counts)) %>%
+		dplyr::arrange( type_ac, type_bc)
 	
 	return( triplet_motif_counts)
 }
@@ -1372,38 +1370,6 @@ count_triplet_motifs_unique_gi_pairs <- function (triplet_motifs ) {
 
 #########################################################
 
-# Count the number of genetic interactions associated with different types of triplet motifs (e.g. triplets = pp, pku, pkd, kuku, tutu, ptd)
-count_overlapping_triplet_motifs <- function (triplet_motifs ) {
-	
-	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
-		group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
-		dplyr::summarise(counts_level=n()) %>%
-		group_by( type_ac, type_bc) %>%
-		dplyr::summarise(counts=n()) %>%
-		ungroup( type_ac, type_bc) %>%
-		dplyr::filter( counts > 1) %>%
-		dplyr::mutate (  motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
-		dplyr::select( one_of( c("motif_type", "counts") )) 
-	
-	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
-		group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
-		dplyr::summarise(counts_level=n()) %>%
-		group_by( type_ac, type_bc) %>%
-		dplyr::summarise(counts=n()) %>%
-		ungroup( type_ac, type_bc) %>%
-		dplyr::rename ( type_ac= type_bc, type_bc = type_ac) %>%
-		dplyr::select( one_of( c("type_ac", "type_bc", "counts") )) %>%
-		dplyr::filter( counts > 1) %>%
-		dplyr::mutate (  motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
-		dplyr::select( one_of( c("motif_type", "counts") )) 
-	
-	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
-		group_by( motif_type) %>% 
-		dplyr::summarise(total_count=sum(counts)) %>%
-		dplyr::arrange( motif_type)
-	
-	return( triplet_motif_counts)
-}
 
 # Group different triplet motifs together 
 group_triplet_motifs_by_type <- function ( motif_type) {
@@ -1417,12 +1383,202 @@ group_triplet_motifs_by_type <- function ( motif_type) {
 	} else {
 		return ( 'others')
 	}
+	
+}
 
+# Count the number of genetic interactions associated with different types of triplet motifs, but grouped by motif types
+# signaling_triplets = kuku, pkd, pku
+# regulatory_triplets = tdp, tutu
+# protein_complexes = pp
+# others = the rest of the triplet motifs
+count_repeated_gi_in_triplet_motifs_summary <- function (triplet_motifs ) {
+	
+	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
+		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
+		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
+		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise( counts=n()) %>%
+		dplyr::filter( counts > 1)
+	
+	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
+		dplyr::rename( type_ac= type_bc, type_bc = type_ac) %>%
+		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
+		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
+		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise( counts=n()) %>%
+		dplyr::filter( counts > 1)
+
+	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by( motif_type, oln_id_a, oln_id_b) %>% 
+		dplyr::summarise( total_count=sum(counts)) %>%
+		dplyr::group_by( motif_type) %>% 
+		dplyr::summarise( total_count=n()) %>%
+		dplyr::arrange( motif_type)
+	
+	return( triplet_motif_counts)
+}
+
+# Count the number of genetic interactions associated with different types of triplet motifs (e.g. triplets = pp, pku, pkd, kuku, tutu, ptd)
+count_repeated_gi_in_triplet_motifs_detailed <- function (triplet_motifs ) {
+	
+	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
+		dplyr::group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise(counts_level=n()) %>%
+		dplyr::filter( counts_level > 1) %>%
+		
+		dplyr::group_by( type_ac, type_bc) %>%
+		dplyr::summarise(counts=n()) %>%
+		dplyr::ungroup() %>%
+		dplyr::mutate( motif_type =  as.character(map2(type_ac, type_bc, paste0) )) %>%
+		dplyr::select( one_of( c("motif_type", "counts") ))
+	
+	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
+		dplyr::group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise(counts_level=n()) %>%
+		dplyr::filter( counts_level > 1) %>%
+		dplyr::group_by( type_ac, type_bc) %>%
+		dplyr::summarise(counts=n()) %>%
+		dplyr::ungroup() %>%		
+		dplyr::rename(  type_ac= type_bc, type_bc = type_ac) %>%
+		dplyr::mutate( motif_type = as.character( map2(type_ac, type_bc, paste0)  ) ) %>%
+		dplyr::select( one_of( c("motif_type", "counts") ))
+	
+	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by( motif_type) %>% 
+		dplyr::summarise(total_count=sum(counts)) %>%
+		dplyr::arrange( motif_type)
+	
+	return( triplet_motif_counts)
+}
+
+
+
+count_repeated_gi_in_triplet_motifs_distribution <- function (triplet_motifs ) {
+	
+	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
+		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
+		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
+		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise( counts=n()) 
+	
+	
+	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
+		dplyr::rename( type_ac= type_bc, type_bc = type_ac) %>%
+		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
+		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
+		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise( counts=n()) 
+	
+	
+	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by( motif_type, oln_id_a, oln_id_b) %>%
+		dplyr::summarise( counts=sum(counts) ) %>%
+		dplyr::filter(counts >1 ) %>%
+		dplyr::group_by( motif_type, counts) %>%
+		dplyr::summarise( total_count=n() ) %>%
+		dplyr::arrange(motif_type)
+	
+	return( triplet_motif_counts) 
+	
+}
+
+
+# Group different triplet motifs together 
+group_triplet_motifs_by_type_directed <- function ( motif_type) {
+	
+	if ( motif_type %in% c( "kuku",  'pku' )) {
+		return ( 'signaling_triplets_up')
+	} else if ( motif_type %in% c( 'pkd' )) {
+		return ( 'signaling_triplets_down')
+	} else if ( motif_type %in% c( "tutu" )) {
+		return ( 'regulatory_triplets_up')
+	} else if ( motif_type %in% c( "tdp" )) {
+		return ( 'regulatory_triplets_down')
+	} else if ( motif_type %in% c( "pp" )) {
+		return ( 'protein_complexes')
+	} else {
+		return ( 'others')
+	}
+	
+}
+
+
+count_repeated_gi_in_triplet_motifs_distribution_in_out <- function (triplet_motifs ) {
+	
+	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
+		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type_directed  ) ) %>%
+		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
+		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise( counts=n()) 
+	
+	
+	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
+		dplyr::rename( type_ac= type_bc, type_bc = type_ac) %>%
+		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type_directed  ) ) %>%
+		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
+		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
+		dplyr::summarise( counts=n()) 
+	
+
+# 
+# 	b_gt_a <- dplyr::mutate(b_gt_a, protein_complexes = 0, regulatory_triplets_up =0)
+# 	
+# 	
+# 	a_ge_b[is.na(a_ge_b)] <- 0
+# 	
+# 	b_gt_a[is.na(b_gt_a)] <- 0
+
+	# print( head( a_ge_b) )
+	# 
+	# print(head(b_gt_a))
+
+	
+	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+		dplyr::group_by( motif_type, oln_id_a, oln_id_b) %>%
+		dplyr::summarise( counts=sum(counts) ) %>%
+		tidyr::spread( motif_type, counts)
+	
+	triplet_motif_counts[is.na(triplet_motif_counts)] <- 0
+
+		# dplyr::summarise( signaling_triplets_up=sum(signaling_triplets_up),
+		# 				  signaling_triplets_down=sum(signaling_triplets_down),
+		# 				  regulatory_triplets_up=sum(regulatory_triplets_up),
+		# 				  regulatory_triplets_down=sum(regulatory_triplets_down),
+		# 				  protein_complexes=sum(protein_complexes),
+		# 				  others=sum(others) )
+	
+	triplet_motif_counts_signaling <- triplet_motif_counts %>%
+		dplyr::select( one_of( c( "oln_id_a",
+								  "oln_id_b",
+								  "signaling_triplets_up",
+								  "signaling_triplets_down") )) %>%
+		dplyr::group_by( signaling_triplets_up, signaling_triplets_down) %>%
+		dplyr::summarise(counts=n() )
+
+
+	triplet_motif_counts_regulatory <- triplet_motif_counts %>%
+		dplyr::select( one_of( c( "oln_id_a",
+								  "oln_id_b",
+								  "regulatory_triplets_up",
+								  "regulatory_triplets_down") )) %>%
+		dplyr::group_by( regulatory_triplets_up, regulatory_triplets_down) %>%
+		dplyr::summarise(counts=n() ) 
+
+	# ggplot ( observed_counts_distribution_repeated_gi_pairs, aes ( num_motifs_shared, counts) ) +
+	# 	geom_line() + 
+	# 	scale_y_log10() +
+	# 	facet_grid( .~  motif_type, scales="free_x") 
+	# 
+	
+	# return(a_ge_b )
+	
+	return( list( signaling=triplet_motif_counts_signaling, regulatory=triplet_motif_counts_regulatory)) 
+	
 }
 
 
 # Transpose the results from the 'count_overlapping_triplet_motifs' function
-transpose_count_overlapping_triplet_motifs_results <- function (triplet_motif_counts,  total_count, motif_type) {
+transpose_count_repeated_gi_in_triplet_motifs_results <- function (triplet_motif_counts,  total_count, motif_type) {
 	
 	triplet_motif_counts <- triplet_motif_counts[, c(motif_type, total_count)]
 	
@@ -1452,7 +1608,6 @@ transpose_count_overlapping_triplet_motifs_results <- function (triplet_motif_co
 get_multiple_edges <- function (edge_list, source_node_column, target_node_column, directed=FALSE, duplicates=FALSE  ) {
   
   edge_list <- edge_list %>% dplyr::select(one_of( c(source_node_column, target_node_column)))
-	
   
   multiple_edges <- dplyr::group_by_( edge_list, .dots=c( source_node_column, target_node_column ) ) %>%
   	dplyr::summarise( count=n() ) %>%
@@ -1470,11 +1625,10 @@ get_multiple_edges <- function (edge_list, source_node_column, target_node_colum
   							dplyr::select(one_of( c( target_node_column, source_node_column))) 	%>% 
   							dplyr::rename_( .dots=rename_condition )
 
-  	
   	inner_join_condition <- c( source_node_column, target_node_column)
   	names( inner_join_condition ) <- c( source_node_column, target_node_column)
   	
-  	multiple_edges_reverse <-  dplyr::inner_join ( edge_list, edge_list_reverse, by=inner_join_condition) %>%
+  	multiple_edges_reverse <-  dplyr::inner_join( edge_list, edge_list_reverse, by=inner_join_condition) %>%
   							   dplyr::distinct()
   	
   	multiple_edges <- rbind( multiple_edges, multiple_edges_reverse)
@@ -1485,11 +1639,11 @@ get_multiple_edges <- function (edge_list, source_node_column, target_node_colum
   if ( duplicates == TRUE ) {
   	inner_join_condition <- c( source_node_column, target_node_column)
   	names( inner_join_condition ) <- c( source_node_column, target_node_column)
-  	multiple_edges <- dplyr::inner_join ( edge_list, multiple_edges, by=inner_join_condition) %>% 
+  	multiple_edges <- dplyr::inner_join( edge_list, multiple_edges, by=inner_join_condition) %>% 
   					          as.data.frame()
   }
   
-  multiple_edges <- multiple_edges %>% arrange_( .dots= c( source_node_column, target_node_column))
+  multiple_edges <- multiple_edges %>% dplyr::arrange_( .dots= c( source_node_column, target_node_column))
   
   return( multiple_edges)
 }
@@ -1508,7 +1662,7 @@ get_multiple_edges <- function (edge_list, source_node_column, target_node_colum
 # The table list all of the self-loops in the network.
 get_self_loops <- function ( edge_list, source_node_column, target_node_column  ) {
   
-  self_loops <-  dplyr::filter_ ( edge_list, .dots= paste ( source_node_column, "==", target_node_column ) ) %>%
+  self_loops <-  dplyr::filter_( edge_list, .dots= paste ( source_node_column, "==", target_node_column ) ) %>%
     as.data.frame()
   
   return ( self_loops)

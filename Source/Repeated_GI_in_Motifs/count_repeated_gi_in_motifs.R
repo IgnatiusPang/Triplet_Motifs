@@ -25,11 +25,13 @@ if ( length(options) != 0  )  {
 	} else {
 		source( "./Source/Common/parameters_file.R")
 	}
+} else {
+	source( "./Source/Common/parameters_file.R")
 }
 
 ### Local Parameters
 if (is_run_locally) {
-	results_directory <- "./Results/Bootstrap_p_values_temp/Overlapping_Triplet_Motifs/"
+	results_directory <- "./Results/Bootstrap_p_values_temp/Repeated_GI_in_Motifs/"
 	create_directory_if_not_exists(results_directory)
 }
 
@@ -65,15 +67,46 @@ triplet_motifs_costanzo <- form_triplet_motifs(filtered_costanzo_stringent, inte
 #########################################################
 
 #### Tallying the number of unique pairs of negative genetic interaction for each type of triplet motif
-observed_counts_unique_gi_pairs_in_motifs <- count_overlapping_triplet_motifs( triplet_motifs_costanzo)
+observed_counts_unique_gi_pairs_in_motifs <- count_repeated_gi_in_triplet_motifs_summary( triplet_motifs_costanzo)
 
+# 
+# observed_counts_distribution_repeated_gi_pairs <- count_repeated_gi_in_triplet_motifs_distribution_in_out( triplet_motifs_costanzo)
+# 
+# observed_counts_distribution_repeated_gi_pairs$signaling %>% 
+# 	as.data.frame() %>% 
+# 	filter( signaling_triplets_up > signaling_triplets_down) %>%
+# 	select(one_of(c("counts"))) %>%
+# 	sum()
+##  [1] 1848
+# 
+# 
+# observed_counts_distribution_repeated_gi_pairs$signaling %>% 
+# 	as.data.frame() %>% 
+# 	filter( signaling_triplets_up < signaling_triplets_down) %>%
+# 	select(one_of(c("counts"))) %>%
+# 	sum()
+## [1] 346
+# 
+# observed_counts_distribution_repeated_gi_pairs$signaling %>% 
+# 	as.data.frame() %>% 
+# 	filter( signaling_triplets_up == signaling_triplets_down) %>%
+# 	filter ( signaling_triplets_up != 0 & signaling_triplets_down != 0) %>%
+# 	select(one_of(c("counts"))) %>%
+# 	sum()
+## [1] 52
+# 
+# # 
+# ggplot ( observed_counts_distribution_repeated_gi_pairs, aes ( num_motifs_shared, counts) ) +
+# 	 geom_line() + 
+# 	 scale_y_log10() +
+#      facet_grid( .~  motif_type, scales="free_x") 
 
-observed_counts_unique_gi_pairs_in_motifs <- transpose_count_overlapping_triplet_motifs_results(observed_counts_unique_gi_pairs_in_motifs, 
+observed_counts_unique_gi_pairs_in_motifs <- transpose_count_repeated_gi_in_triplet_motifs_results(observed_counts_unique_gi_pairs_in_motifs, 
 																 "total_count", "motif_type") 	
 
-write.table(observed_counts_unique_gi_pairs_in_motifs, file = paste( results_directory, observed_counts_unique_gi_pairs_in_motifs_file, sep=""), 
-			row.names = FALSE)
-
+write.table( observed_counts_unique_gi_pairs_in_motifs, 
+			 file = paste( results_directory, observed_counts_unique_gi_pairs_in_motifs_file, sep=""), 
+			 row.names = FALSE)
 
 #########################################################
 #########################################################
@@ -91,8 +124,8 @@ colnames( edited_fitered_costanzo_stringent)[colnames( edited_fitered_costanzo_s
 ### Run one trial to see whether it works or not 
 # result_one_trial <- run_one_randomized_trial_compare_with_dataset(1, edited_fitered_costanzo_stringent,
 # 																  kinase_network_subset, sbi_interactome, tf_network,
-# 																  num_iterations=100, 
-# 																  count_overlapping_triplet_motifs)
+# 																  num_iterations=0.001,
+# 																  count_repeated_gi_in_triplet_motifs_summary)
 
 # Need to have mc.set.seed = TRUE and mc.preschedule=FALSE as per user manual on ?mcparallel in the parallel library. See section on Random Numbers.
 ## "The behaviour with mc.set.seed = TRUE is different only if RNGkind("L'Ecuyer-CMRG") has been selected. Then each time a child is forked it is given the next stream (see nextRNGStream). So if you select that generator, set a seed and call mc.reset.stream just before the first use of mcparallel the results of simulations will be reproducible provided the same tasks are given to the first, second, ... forked process." -- user manual on ?mcparallel in the parallel library, section on Random Numbers
@@ -101,14 +134,18 @@ colnames( edited_fitered_costanzo_stringent)[colnames( edited_fitered_costanzo_s
 #randomized_counts_sgd_paralogs_file      <- "randomized_counts_sgd_paralogs_in_tri_motifs.tab"
 
 mc.reset.stream() 
-randomized_counts_unique_gi_pairs_in_motifs_list <- mclapply ( X=1:number_of_randomized_trials, FUN= run_one_randomized_trial_compare_with_dataset,   
-													  edited_fitered_costanzo_stringent, kinase_network_subset, sbi_interactome, tf_network, 
+randomized_counts_unique_gi_pairs_in_motifs_list <- mclapply ( X=1:number_of_randomized_trials, 
+															   FUN= run_one_randomized_trial_compare_with_dataset,  
+													  edited_fitered_costanzo_stringent, kinase_network_subset, 
+													  sbi_interactome, tf_network, 
 													  num_iterations=num_iteration_rewire_network, 
-													  count_overlapping_triplet_motifs, 
+													  count_repeated_gi_in_triplet_motifs_summary, 
 													  mc.set.seed = TRUE , 
 													  mc.preschedule=FALSE, mc.cores=number_of_cores_to_use )
 											  
+detach(package:dplyr)
 library(plyr)
+library(dplyr)
 randomized_counts_unique_gi_pairs_in_motifs <- ldply( randomized_counts_unique_gi_pairs_in_motifs_list, 
 													  function(x) { as.data.frame(x) %>% spread(motif_type, total_count) })
 detach(package:plyr)

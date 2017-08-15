@@ -40,11 +40,12 @@ get_list_of_files <- function(results_directory, file_pattern  )  {
 
 # Input: 
 # list_of_result_files - Complete file path for the result tables 
+# id - add an id column indicating the file from which the file originates from 
 
 # Output:
 # result_table - A result table which has the same shape as the input tables.
 
-concatenate_table_from_file_list <- function ( list_of_result_files) {
+concatenate_table_from_file_list <- function ( list_of_result_files, id=FALSE) {
 	
 	result_table <- c()
 	file_counter <- 1
@@ -54,6 +55,10 @@ concatenate_table_from_file_list <- function ( list_of_result_files) {
 		print( one_result_file)
 		
 		one_result_table  <- read.table( one_result_file, header=TRUE)
+		
+		if ( id == TRUE) {
+			one_result_table <- dplyr::mutate(one_result_table, file_number= file_counter)
+		}
 		
 		print ( length( one_result_table[,1]))
 		
@@ -74,6 +79,8 @@ concatenate_table_from_file_list <- function ( list_of_result_files) {
 	
 	return ( result_table)
 }
+
+
 
 #####################################################################
 
@@ -138,7 +145,7 @@ bind_rows_of_two_tables <- function (result_table, one_result_table) {
 # A table with the results from many randomization runs collated. 
 
 collate_randomization_result_files_into_one_table <- function (   raw_results_directory, triplet_motifs_file_pattern,  final_results_directory_pattern, 
-										  number_of_randomized_samples = 2000  ) { 
+										  number_of_randomized_samples = 2000, id = FALSE  ) { 
 	
 	
 	triplet_motifs_list_of_result_files <- get_list_of_files (raw_results_directory, triplet_motifs_file_pattern  )  
@@ -151,7 +158,7 @@ collate_randomization_result_files_into_one_table <- function (   raw_results_di
 	
 	files_to_use 						<- as.vector ( unlist ( sapply( triplet_motifs_list_of_result_files, function(x) { grepl( "Job", x) } )  ) )
 	triplet_motifs_list_of_result_files <- triplet_motifs_list_of_result_files[files_to_use]
-	count_triplet_motifs_randomized 	<- concatenate_table_from_file_list  ( triplet_motifs_list_of_result_files)
+	count_triplet_motifs_randomized 	<- concatenate_table_from_file_list  ( triplet_motifs_list_of_result_files, id)
 	
 	if ( number_of_randomized_samples > length(count_triplet_motifs_randomized[,1] ) ) {
 		
@@ -198,7 +205,8 @@ collate_result_files_helper <- function ( raw_results_directory, triplet_motifs_
 																						  final_results_directory_pattern, 
 																						  number_of_randomized_samples = number_of_randomized_samples  )
 	
-	final_results_table_count_triplet_motifs <- get_full_results_table(count_triplet_motifs_observed, count_triplet_motifs_randomized, p.value=p_values) 
+	final_results_table_count_triplet_motifs <- get_full_results_table(count_triplet_motifs_observed, count_triplet_motifs_randomized, 
+																	   p.value=p_values) 
 
 	write.table ( count_triplet_motifs_randomized, file=paste( final_results_directory, count_triplet_motifs_randomized_file , sep=""))
 	write.table (final_results_table_count_triplet_motifs, file=paste( final_results_directory, triplet_motifs_full_results_file, sep="") )
