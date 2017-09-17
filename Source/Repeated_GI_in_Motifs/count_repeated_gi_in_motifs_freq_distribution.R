@@ -22,10 +22,10 @@ if ( length(options) != 0  )  {
 	if ( options[1] == 'katana' | options[1] == 'clive')   {
 		source( "./parameters_file.R" )
 	} else {
-		source( "./Source/Common/parameters_file.R")
+		source( "./Common/parameters_file.R")
 	}
 } else {
-	source( "./Source/Common/parameters_file.R")
+	source( "./Common/parameters_file.R")
 }
 
 ### Local Parameters
@@ -69,6 +69,33 @@ triplet_motifs_costanzo <- form_triplet_motifs(filtered_costanzo_stringent, inte
 # observed_counts_unique_gi_pairs_in_motifs <- count_repeated_gi_in_triplet_motifs( triplet_motifs_costanzo)
 
 observed_counts_unique_gi_pairs_in_motifs <- count_repeated_gi_in_triplet_motifs_distribution( triplet_motifs_costanzo)
+
+list_of_gi <- count_repeated_gi_in_triplet_motifs_look_at_gi( triplet_motifs_costanzo ) %>%
+			  dplyr::filter( motif_type != "others") %>%
+            #  dplyr::filter( oln_id_a == "YDR507C" & oln_id_b == "YCR002C" )
+			  dplyr::filter (motif_type == 'regulatory_triplets') %>%
+			  dplyr::filter ( counts == '5')
+
+# 
+# triplet_motifs_costanzo %>%
+# 	dplyr::filter( oln_id_a == "YDR507C"  & oln_id_b == "YCR002C"  & 
+# 				   	!( type_ac == 'p' & type_bc == 'p') & 
+# 				   	!( type_ac == 'kd' & type_bc == 'ku') ) %>%
+# 	dplyr::select( one_of ( c("oln_id_a", "oln_id_b", "oln_id_c"))) %>%
+# 	dplyr::distinct()
+
+
+
+triplet_motifs_costanzo %>%
+	dplyr::right_join ( list_of_gi) %>%
+	dplyr::filter(	( type_ac == 'tu'  & type_bc == 'tu') |
+				   	( type_ac == 'td' & type_bc == 'p') |
+				   	( type_ac == 'p' & type_bc == 'td') 
+				    )  %>%
+	as.data.frame()
+	# dplyr::select( one_of ( c("oln_id_a", "oln_id_b", "oln_id_c"))) %>%
+	# dplyr::distinct()
+
 
 # observed_counts_unique_gi_pairs_in_motifs <- transpose_count_repeated_gi_in_triplet_motifs_results(observed_counts_unique_gi_pairs_in_motifs, 
 # 																 "total_count", "motif_type") 	

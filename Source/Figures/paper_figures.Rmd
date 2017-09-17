@@ -1,0 +1,449 @@
+---
+title: "paper_figures.Rmd"
+author: "Ignatius Pang"
+date: "31 August 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath("..")) 
+```
+
+## Description 
+Create the figures for the manuscript. Does not include the network diagrams, these are in a separate script.
+
+
+## Import library
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(svglite)
+```
+
+## Global parameters
+
+```{r}
+
+# figure_file_suffix <- ".tiff"
+# figure_file_suffix <- ".svg"
+figure_file_suffix <- ".pdf"
+options <- commandArgs(trailingOnly = TRUE)
+
+source( file.path( local_base_directory, "./Common/parameters_file.R") ) 
+source( file.path ( source_directory_common, 'count_triplet_motifs_helper.R'))
+source( file.path ( local_base_directory, './Figures/paper_figures_helper.R') )
+
+computational_results_directory <- file.path ( local_base_directory, "Results/Bootstrap_p_values") 
+figures_results_directory       <- file.path ( local_base_directory, "Results/Figures/Graphs" ) 
+
+plot_background_colour <- "white"   # "#7E4E99" # 
+axis_text_colour <- "black"  # "#FFC000" # 
+
+### Graphic width and heigth for the boxplots of the randomization results. The observed value is shown in a dot. 
+### This setting is for the poster presentation.
+graphic_width <- 5
+graphic_height <- 3
+
+
+# False positive rate for filtering triplet motifs with low counts
+false_positive_rates <- 0.02
+
+# List of 15 types of triplet motifs
+all_15_types_of_triplet_motifs <- c("pp" 
+									,"tutu"
+									,"pku"
+									,"kuku"
+									,"ptd"
+									,"kdku"
+									,"ptu"
+									,"tdtd"
+									,"pkd"
+									,"tdtu"
+									,"kdkd"
+									,"tuku"
+									,"tdku"
+									,"tdkd"
+									,"tukd")
+
+# Parameter for Figure 5.
+max_num_overlapping_triplets_to_show <- 35
+
+
+```
+
+## Figure 1a. 
+Please refer to the script 'print_triplet_network.R'. This requires Cytoscape to be opened. 
+The figure was manually selected from this network. Please note it takes a long computational time to draw this in Cytoscape.
+
+## Figure 1b.
+Please refer to the script 'print_triplet_network.R'. This requires Cytoscape to be opened. 
+Please note it takes a long computational time to draw this in Cytoscape.
+
+## Figure 1c.
+Please refer to the script 'print_triplet_network.R'. This requires Cytoscape to be opened. 
+After the network was draw, the Spatial Analysis of Functional Enrichment (SAFE) tool was used to draw this figure. 
+
+Anastasia Baryshnikova (2016) Systematic Functional Annotation and Visualization of Biological Networks. 
+Cell Systems , Volume 2 , Issue 6 , 412 - 421.
+
+The Gene Ontology Annotation file used is in the following file path: 'Results/SAFE/go_bp_140819.txt'. 
+
+
+## Find over-represented motifs 
+Sort triplet motifs by count and get those that are significantly over-represented. 
+```{r}
+### Motifs that are significant. Sorted in decending order of the number of observed motifs.
+
+negative_interactions_full <- read.table ( file= file.path( computational_results_directory, 
+										   "Negative_Genetic_Interactions/Final_Results/full_results_triplet_motifs_costanzo_2016_collated.tab") )
+
+rows_to_include  <-  (negative_interactions_full[, "observed_counts"] > sum ( negative_interactions_full[, "observed_counts"] ) * false_positive_rates)  &
+					 (negative_interactions_full[, "enrichment_adj_p_values"]  < 0.05)
+
+rows_to_include <- ifelse ( is.na(rows_to_include), FALSE, rows_to_include)
+
+significant_types_of_motifs <- dplyr::arrange ( negative_interactions_full[rows_to_include, ], desc( observed_counts ) ) %>%
+							   dplyr::select ( one_of ( c( "motif_type"))) %>% 
+							   as.data.frame() %>%  
+							   t() %>% 
+							   as.vector()
+
+## Convert motif names to paper format
+significant_types_of_motifs <- convert_triplet_motifs_name_to_paper_style( significant_types_of_motifs ) 
+
+significant_types_of_motifs <- significant_types_of_motifs[ c("pp", "tutu",  "tdp", "pku", "kuku", "pkd" )]
+
+```
+
+## Figure 2a.
+This figure was hand drawn. 
+
+## Figure 2b. Six over-represented triplet motifs
+```{r}
+
+### Print the analysis of negative genetic interactions 
+negative_interactions_full     <- read.table ( file= file.path( computational_results_directory, 
+											   "Negative_Genetic_Interactions/Final_Results/full_results_triplet_motifs_costanzo_2016_collated.tab") )
+
+negative_interactions_full     <- dplyr::arrange ( negative_interactions_full, desc( observed_counts ) ) 
+	
+	
+negative_interactions_random   <- read.table ( file=  file.path( computational_results_directory, 
+																 "Negative_Genetic_Interactions/Final_Results/randomized_counts_triplet_motifs.tab"  ))
+
+negative_interactions_observed <- read.table ( file= file.path( computational_results_directory, 
+																"Negative_Genetic_Interactions/Job_21/results_count_triplet_motifs_costanzo.tab"), 
+								               header=TRUE )
+
+print_box_plot_observed_vs_random(negative_interactions_observed, negative_interactions_random, negative_interactions_full, significant_types_of_motifs,
+								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
+								  axis_text_colour=axis_text_colour)
+
+ggsave(file.path(figures_results_directory, paste( "significant_triplet_motifs_negative_gi", figure_file_suffix, sep="") ), 
+	   plot=last_plot(), width=graphic_width, 
+	   height=graphic_height ) 
+
+
+```
+
+
+
+
+## Figure 2c. Paralogs are enriched among the negative genetic interactions of triplet motifs.
+```{r}
+orthomcl_paralogs_full   <- read.table ( file.path( computational_results_directory,
+													  "Paralogs/Final_Results/full_results_table_orthomcl_paralogs_in_tri_motifs.tab"), header =TRUE)
+
+orthomcl_paralogs_random   <- read.table ( file.path( computational_results_directory,
+												   "Paralogs/Final_Results/randomized_counts_orthomcl_paralogs_in_tri_motifs.tab"), header =TRUE)
+orthomcl_paralogs_observed <- read.table ( file.path( computational_results_directory,
+												   "Paralogs/Job_1/observed_counts_orthomcl_paralogs_in_tri_motifs.tab"), header =TRUE)
+
+
+print_box_plot_observed_vs_random(orthomcl_paralogs_observed, orthomcl_paralogs_random, orthomcl_paralogs_full, significant_types_of_motifs,
+								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
+								  axis_text_colour=axis_text_colour)
+
+ggsave(file.path(figures_results_directory, paste("orthomcl_paralogs", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
+
+
+
+```
+
+
+
+## Figure 3. Random removal or addition of negative genetic interactions highlights the robust over-representation of the six triplet motifs.  
+```{r}
+
+## Randomly add or remove edges
+
+# Need to run collate_random_edges_results.R first
+
+### Directories
+final_results_directory <- file.path( computational_results_directory, "Random_Edges/Final_Results") 
+
+stat_test_result_random_edges <- read.table ( file=file.path( final_results_directory, "stat_test_result_random_edges.txt" ))
+
+randomization_collated_counts <- read.table (  file=file.path ( final_results_directory, "randomization_collated_counts.txt"))
+
+# The motif types sorted by largest to lowest count
+# motif_types_sorted_by_counts_desc <- dplyr::filter ( randomization_collated_counts, parameter==1 & experiment=='Before' & motif_type != 'total' ) %>%
+# 	dplyr::select( one_of(c('experiment', 'motif_type', 'counts'))) %>%
+# 	dplyr::arrange(desc(counts)) %>%
+# 	dplyr::distinct() %>%
+# 	dplyr::select (one_of(c('motif_type'))) %>%
+# 	as.data.frame() %>%
+# 	t() %>%
+# 	as.vector()
+
+# The motif types are set according to this list 
+motif_types_sorted_by_counts_desc <- c( "PP", "TUTU", "TDP", "PKU",  "KUKU",  "PKD",  
+										"PTU", "KDKU", "TDTD", "KDKD", "TDTU", "TUKD", "TDKD", "TDKU", "TUKU" )
+
+### Get statistical significance of results
+background_shading_table <- dplyr::select(stat_test_result_random_edges, one_of(c('parameter', 'motif_type', 'is_significant')))
+background_shading_table$experiment <-1
+background_shading_table$counts <-1
+background_shading_table[, 'is_significant'] <- as.factor(background_shading_table[, 'is_significant'] )
+
+## Change the order in which the motif types are ordered when they appear as rows in the facet grid
+background_shading_table[, 'motif_type'] <- factor (  background_shading_table[, 'motif_type'], levels = motif_types_sorted_by_counts_desc ) 
+randomization_collated_counts[, 'motif_type'] <- factor ( randomization_collated_counts[,'motif_type'], levels = motif_types_sorted_by_counts_desc ) 
+randomization_collated_counts[, 'experiment'] <- factor ( randomization_collated_counts[,'experiment'], levels = c( 'Before', 'After') ) 
+
+
+# removal or addition of nodes to network
+randomization_collated_counts %>%
+	dplyr::filter (  motif_type != 'total' ) %>%
+	ggplot (  aes( experiment, counts) ) +
+	geom_boxplot()  +
+	geom_rect(data = background_shading_table ,aes(  fill=is_significant ),
+			  xmin = -Inf,xmax = Inf,
+			  ymin = -Inf,ymax = Inf,alpha = 0.3) +
+	scale_fill_manual( values=c('blue', 'red')) +
+	facet_grid(   motif_type ~ parameter , scales="free") + 
+	labs( title = "Removal or Addition of Edges to Network") +
+	xlab( "Before or After Network Randomization") +
+	ylab ('Counts') +
+	theme( plot.background = element_rect(fill = "white", color="white"), 
+		   axis.text = element_text(colour = "black"),
+		   axis.title = element_text(colour = "black"),
+		   strip.text.y = element_text(face = "italic"),
+		   plot.title = element_text(hjust = 0.5, size = rel(1), colour = "black"),
+		   legend.position="none")
+
+
+ggsave(file.path(figures_results_directory, paste("randomization_collated_results", figure_file_suffix, sep="")), 
+	   plot=last_plot(), width=10, height=10 ) 
+
+ggsave(file.path(figures_results_directory, paste("randomization_collated_results_15x15", figure_file_suffix, sep="")), plot=last_plot(), width=15, height=15 ) 
+
+```
+
+## Figure 4a.
+This figure was hand drawn. 
+
+## Figure 4b. Overlap of negative genetic interactions in triplet motifs with other types of interactions. 
+```{r}
+
+final_results_directory <- file.path( computational_results_directory, "Analyze_GI_edges/Final_Results") 
+
+triplet_motifs_full_results_file     <- "full_results_table_analyze_gi_edge_in_tri_motifs.tab"
+count_triplet_motifs_randomized_file <- "randomized_results_table.tab" 
+
+joined_table_summarized_filtered <- read.table (  file=file.path( final_results_directory, triplet_motifs_full_results_file), header = TRUE  )
+
+analyze_gi_edges_counts_gathered <- read.table ( file=file.path( final_results_directory, count_triplet_motifs_randomized_file), header = TRUE )
+
+motif_type_levels_order <- c( 'PP', 'TUTU', 'TDP', 'PKU', 'KUKU', 'PKD')
+
+edge_type_levels_order  <- c( 'None', 'P', 'K1', 'K2', 'T1', 'T2')
+
+joined_table_summarized_filtered[, "motif_type"] <- factor ( joined_table_summarized_filtered[,"motif_type"], levels=motif_type_levels_order)
+analyze_gi_edges_counts_gathered[, "motif_type"] <- factor ( analyze_gi_edges_counts_gathered[,"motif_type"], levels=motif_type_levels_order)
+
+joined_table_summarized_filtered[, "edge_type"] <- factor ( joined_table_summarized_filtered[,"edge_type"], levels=edge_type_levels_order)
+analyze_gi_edges_counts_gathered[, "edge_type"] <- factor ( analyze_gi_edges_counts_gathered[,"edge_type"], levels=edge_type_levels_order)
+
+ggplot_analyze_gi_edges <- ggplot(analyze_gi_edges_counts_gathered, aes(edge_type, counts)) +
+	geom_boxplot() +
+	## Add the observed values as additional points
+	geom_point( data=joined_table_summarized_filtered, aes(x=edge_type, y=observed_counts, color=color ),
+				 size=4 , alpha=0.5) 	+
+	scale_color_identity()
+
+### With wrapping
+ggplot_analyze_gi_edges + 
+	## Add faceting
+	facet_wrap ( ~ motif_type , scales="free") +
+	xlab( "Types of Motifs") 	+ 
+	ylab( "Counts") + 
+	theme( axis.text.x=element_text(face="italic") ,  strip.text.x=element_text(face="italic"), 
+		   text = element_text(size=20)
+		   )
+
+ggsave(file.path(figures_results_directory, paste( "analyze_gi_edges_wrap", figure_file_suffix, sep="")), 
+	   plot=last_plot(), width=10.3, height=7.5 ) # , width=10, height=7
+```
+
+
+## Figure 5a. Genetic interactions shared by two or more overlapping triplets highlight functional interaction modules .  
+```{r}
+
+randomized_table <- read.table(  file.path( computational_results_directory, "Repeated_GI_in_Motifs_Freq_Dist/Final_Results/overlapping_triplets_randomized_frequency_distribution.txt"), 
+								 header=TRUE)
+
+statistical_analysis <- read.table(  file.path( computational_results_directory, "Repeated_GI_in_Motifs_Freq_Dist/Final_Results/overlapping_triplets_frequency_distribution.txt"),
+									 header = TRUE)
+
+## Draw counts distribution table 
+randomized_table %>%
+	dplyr::filter( counts <= max_num_overlapping_triplets_to_show ) %>%
+	dplyr::mutate( total_count = total_count + 1) %>%
+	dplyr::filter( motif_type != 'Others') %>%
+	ggplot( aes( counts, total_count, group=counts ) ) + 
+	geom_boxplot(color="grey40") +
+	scale_y_log10() + 
+	xlab(label="Num. Overlapping Triplets") +
+	ylab(label="Num. Genetic Interactions") +
+	geom_point( data=statistical_analysis, aes( color=is_significant_color), color=statistical_analysis$is_significant_color, 
+				alpha=0.6, size=2) +
+	coord_cartesian(xlim=c(0, max_num_overlapping_triplets_to_show)) + 
+	guides(color=FALSE) +
+	facet_grid ( motif_type ~., scales="free" ) 
+
+ggsave(file.path(figures_results_directory, paste("repeated_gi_num_motifs_per_gi", figure_file_suffix, sep="") ), 
+	   plot=last_plot(), width=5, height=6) # , height=graphic_height 
+
+```
+
+## Figure 5c, d, e. 
+Please refer to the file 'print_triplet_network_specific_network.Rmd' 
+
+## Figure 6. Triplet motifs that have a significant over-representation of:
+
+## Figure 6a. Triplet motifs that have a significant over-representation of a pair of essential proteins involved in negative genetic interactions.
+```{r}
+essential_ab_full <- read.table ( file.path( computational_results_directory,
+											 "Negative_GI_Essential/Final_Results/full_results_table_count_a_and_b.tab"), header =TRUE)
+
+essential_ab_random   <- read.table ( file.path( computational_results_directory,
+												 "Negative_GI_Essential/Final_Results/randomized_results_table_count_a_and_b.tab"), header =TRUE)
+
+essential_ab_observed <- read.table ( file.path( computational_results_directory,
+												 "Negative_GI_Essential/Job_20/observed_a_and_b_essential_gene_counts.tab"), header =TRUE)
+
+print_box_plot_observed_vs_random(essential_ab_observed, essential_ab_random, essential_ab_full, significant_types_of_motifs,
+								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
+								  axis_text_colour=axis_text_colour)
+
+ggsave(file.path(figures_results_directory, paste("essential_gene_ab", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
+
+
+```
+
+## Figure 6b. Triplet motifs that have a significant over-representation of an essential third protein not part of the negative genetic interaction in the triplet motif.
+```{r}
+
+essential_c_full  <- read.table ( file.path( computational_results_directory,
+												"Negative_GI_Essential/Final_Results/full_results_table_count_c.tab"), header =TRUE)
+
+essential_c_random   <- read.table ( file.path( computational_results_directory,
+											  "Negative_GI_Essential/Final_Results/randomized_results_table_count_c.tab"), header =TRUE)
+
+essential_c_observed <- read.table ( file.path( computational_results_directory,
+											  "Negative_GI_Essential/Job_20/observed_c_essential_gene_counts.tab"), header =TRUE)
+
+print_box_plot_observed_vs_random(essential_c_observed, essential_c_random, essential_c_full, significant_types_of_motifs,
+								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
+								  axis_text_colour=axis_text_colour)
+
+ggsave(file.path(figures_results_directory, paste("essential_gene_c", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
+
+```
+
+## Figure 6c. Triplet motifs that have a significant over-representation of a pair of cell cycle-regulated genes involve in negative genetic interactions
+```{r}
+
+periodic_ab_full <- read.table ( file.path( computational_results_directory,
+											"Cell_Cycle/Final_Results/full_results_periodic_gene_counts_a_and_b.tab"), header =TRUE)
+
+periodic_ab_random   <- read.table ( file.path( computational_results_directory,
+												"Cell_Cycle/Final_Results/randomized_results_periodic_gene_counts_a_and_b.tab"), header =TRUE)
+periodic_ab_observed <- read.table ( file.path( computational_results_directory,
+												"Cell_Cycle/Job_1/observed_a_and_b_periodic_gene_counts.tab"), header =TRUE)
+
+print_box_plot_observed_vs_random(periodic_ab_observed, periodic_ab_random, periodic_ab_full, significant_types_of_motifs,
+								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
+								  axis_text_colour=axis_text_colour)
+
+ggsave(file.path(figures_results_directory, paste("periodic_ab", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
+
+```
+
+## Figure 6d. Triplet motifs that have a significant over-representation of a cell cycle-regulated protein not part of the negative genetic interaction in the triplet motif
+```{r}
+
+periodic_c_full <- read.table ( file.path( computational_results_directory,
+											"Cell_Cycle/Final_Results/full_results_periodic_gene_counts_c.tab"), header =TRUE)
+
+periodic_c_random   <- read.table ( file.path( computational_results_directory,
+												"Cell_Cycle/Final_Results/randomized_results_periodic_gene_counts_c.tab"), header =TRUE)
+periodic_c_observed <- read.table ( file.path( computational_results_directory,
+												"Cell_Cycle/Job_1/observed_c_periodic_gene_counts.tab"), header =TRUE)
+
+print_box_plot_observed_vs_random(periodic_c_observed, periodic_c_random, periodic_c_full, significant_types_of_motifs,
+								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
+								  axis_text_colour=axis_text_colour)
+
+ggsave(file.path(figures_results_directory, paste("periodic_c", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
+
+```
+
+## Figure 6e. Triplet motifs that have a significant over-representation of a pair of proteins that are toxic upon overexpression and involved in negative genetic interaction.
+```{r}
+
+overexpression_ab_full <- read.table ( file.path( computational_results_directory,
+									  "Overexpressed_Toxic_Genes/Final_Results/full_results_table_overexpressed_toxic_gene_counts_a_and_b.tab"), header =TRUE)
+
+overexpression_ab_random   <- read.table ( file.path( computational_results_directory,
+										  "Overexpressed_Toxic_Genes/Final_Results/randomized_results_table_overexpressed_toxic_gene_counts_a_and_b.tab"), header =TRUE)
+
+overexpression_ab_observed <- read.table ( file.path( computational_results_directory,
+												"Overexpressed_Toxic_Genes/Job_1/observed_a_and_b_overexpressed_toxic_gene_counts.tab"), header =TRUE)
+
+print_box_plot_observed_vs_random(overexpression_ab_observed, overexpression_ab_random, overexpression_ab_full, significant_types_of_motifs,
+								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
+								  axis_text_colour=axis_text_colour)
+
+ggsave(file.path(figures_results_directory, paste("overexpression_ab", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
+
+```
+
+## Figure 6f. Triplet motifs that have a significant over-representation of a protein that is toxic upon overexpression and not part of the negative genetic interaction in the triplet motif. 
+```{r}
+
+overexpression_c_full <- read.table ( file.path( computational_results_directory,
+										   "Overexpressed_Toxic_Genes/Final_Results/full_results_table_overexpressed_toxic_gene_counts_c.tab"), 
+									       header =TRUE)
+
+overexpression_c_random   <- read.table ( file.path( computational_results_directory,
+										  "Overexpressed_Toxic_Genes/Final_Results/randomized_results_table_overexpressed_toxic_gene_counts_c.tab"),
+										  header =TRUE)
+
+overexpression_c_observed <- read.table ( file.path( computational_results_directory,
+											   "Overexpressed_Toxic_Genes/Job_1/observed_c_overexpressed_toxic_gene_counts.tab"), header =TRUE)
+
+print_box_plot_observed_vs_random(overexpression_c_observed, overexpression_c_random, overexpression_c_full, significant_types_of_motifs,
+								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour )
+
+ggsave(file.path(figures_results_directory, paste("overexpression_c", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
+
+```
+
+## Figure 7.
+Please refer to the file 'print_triplet_network_specific_network.Rmd' 
+
+

@@ -4,13 +4,20 @@
 ### Description: Count the observed number of triplet motifs. Randomize the respective networks and count the number triplet motifs, repeat randomization 1000 times.
 ### Obtain the bootstrap p-value
 
+library(plyr)
+library(ggplot2)
 library(igraph)
-library(purrr)
-library(dplyr)
+library(knitr) # required for the 'kable' function for printing pretty table in html
 library(lazyeval)
 library(parallel)
-library(tidyr)
 library(purrr)
+library(RCy3)
+library(reshape2)
+library(sqldf)
+library(svglite)
+library(tibble)
+library(tidyr)
+library(dplyr)
 
 sessionInfo()
 
@@ -35,8 +42,6 @@ num_iteration_rewire_network <- NULL # Number of times each network is rewired b
 use_costanzo_2010_dataset 	 <- FALSE
 
 
-# local_base_directory    <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/"
-# local_base_directory  <-  "~/PostDoc/2016/Triplet_Motifs/"
 local_base_directory  <-  "/home/ignatius/PostDoc/2016/Triplet_Motifs/"
 
 
@@ -99,6 +104,7 @@ if (is_run_locally == TRUE) {
 
 	data_directory <- paste( local_base_directory, "Data/Triplet_Motifs_R_data/", sep="")
 	source_directory <- paste( local_base_directory, "Source/", sep="")
+	results_directory <- paste( local_base_directory, "Results/", sep="")
 	source_directory_common <- paste( source_directory, "Common/",  sep="")
 }
 

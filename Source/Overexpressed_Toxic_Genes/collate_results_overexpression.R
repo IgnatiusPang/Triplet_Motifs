@@ -12,8 +12,6 @@ library(reshape2)
 options <- commandArgs(trailingOnly = TRUE)
 source( "./Common/parameters_file.R")
 
-source_directory <- file.path( base_directory, "Source")
-source_directory_common <- file.path( source_directory, "Common")
 source( file.path(source_directory_common, "count_triplet_motifs_helper.R") )
 source(  file.path(source_directory_common, "concatenate_result_files.R") )
 

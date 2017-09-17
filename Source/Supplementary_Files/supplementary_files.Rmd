@@ -1,0 +1,523 @@
+---
+title: "Supplementary Files"
+Date: 30-8-2017
+output:
+  html_document: default
+  html_notebook: default
+Author: Ignatius Pang
+---
+
+## Description
+
+I want to create the supplementary tables for this manuscript. 
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath("..")) 
+```
+
+
+```{r}
+library(RCy3)
+library(plyr)
+library(dplyr)
+library(RODBC)
+library(sqldf)
+library(knitr) # required for the 'kable' function for printing pretty table in html
+
+sessionInfo()
+```
+
+## Read helper functions 
+```{r}
+
+source_directory_common <- '/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Common/'
+## Load the root base directory for the entire project
+options <- commandArgs(trailingOnly = TRUE)
+source( file.path( source_directory_common, "parameters_file.R") ) 
+
+source( file.path ( source_directory_common, 'draw_triplet_motif_network_helper.R') ) 
+source( file.path ( source_directory_common, 'count_triplet_motifs_helper.R'))
+
+supplementary_data_directory <- file.path(results_directory, "Supplementary_Files" ) 
+create_directory_if_not_exists(supplementary_data_directory)
+
+```
+
+## Global parameters
+```{r}
+
+
+## All interactions in the kinase substrate network must be greater than this score
+sharifpoor_kinase_substrate_network_threshold <- 2.5
+
+
+## Thresholds for the Costanzo genetic interaction network
+## Stringent negative genetic interactions must have score less than this threshold
+costanzo_stringent_negative_gi_score_threshold    <- -0.12
+
+## Stringent negative genetic interactions must have p-value less than this threshold
+costanzo_stringent_negative_gi_p_value_threshold  <-  0.05	
+
+## Stringent negative genetic interactions must have absolute value of stanard deviation (std_dev) less than this threshold
+costanzo_stringent_negative_gi_std_dev_threshold <- 0.08
+```
+
+
+## Read data tables 
+```{r}
+results_directory <- file.path(   local_base_directory, "Results" ) 
+
+triplet_motifs_costanzo_2016 <- read.table ( file.path( data_directory, "triplet_motifs_costanzo_2016.txt"), 
+											 header =TRUE , stringsAsFactors = FALSE)
+
+if ( ! ( "oln_id_a" %in% colnames( triplet_motifs_costanzo_2016) ) ) {
+	triplet_motifs_costanzo_2016 <- triplet_motifs_costanzo_2016 %>%
+								dplyr::rename(  oln_id_a = node_a , oln_id_b =  node_b ,  oln_id_c = node_c  )
+}
+
+toxic_upon_overexpression <- read.table ( file.path( data_directory, "overexpressed_toxic_genes.txt"), header=TRUE , stringsAsFactors = FALSE)
+
+essential_genes <- read.table ( file.path( data_directory, "essential_genes.txt"), header=TRUE, stringsAsFactors = FALSE)
+
+cell_cycle_peak_times_of_orfs <- read.table ( file.path( data_directory, "periodically_expressed_genes.txt"), header=TRUE, stringsAsFactors = FALSE)
+
+gene_names <- read.table ( file.path(data_directory, "gene_names_table.txt"), sep="\t", header=TRUE, stringsAsFactors = FALSE, 
+						    na.strings="", quote="\"")
+
+
+## Results from Spatial Analysis of Functional Enrichment (SAFE tool)
+
+enriched_functions <- read.table ( file= file.path( results_directory, "SAFE/20161123/Triplet_Motifs/safe_exported_reports_20161123.txt-node_properties_annotation-highest.txt"), 
+								   header=TRUE, stringsAsFactors = TRUE, 
+						    na.strings="", quote="", sep="\t")
+
+```
+
+## Negative Genetic interactions 
+```{r}
+
+constanzo_stringet_2016_negative_genetic_interactions <- sqldf( paste(  "select distinct query_oln_id_edited as query_oln_id
+														, gene_names_a.gene_name as query_gene_name
+														, gene_names_a.description as query_gene_description
+														, array_oln_id_edited as array_oln_id
+														, gene_names_b.gene_name as array_gene_name
+														, gene_names_b.description as array_gene_description
+														, genetic_interaction_score
+													 from filtered_costanzo_stringent_2016 gi
+                                                          left join gene_names as gene_names_a
+																on gi.query_oln_id_edited = gene_names_a.oln_id
+                                                          left join gene_names as gene_names_b
+																on gi.array_oln_id_edited = gene_names_b.oln_id
+													 where genetic_interaction_score < ", costanzo_stringent_negative_gi_score_threshold, 
+															" and p_value < ", costanzo_stringent_negative_gi_p_value_threshold, 
+															" and abs(std_dev) < ", costanzo_stringent_negative_gi_std_dev_threshold , ";" ) )
+
+write.table ( constanzo_stringet_2016_negative_genetic_interactions, 
+			  file.path(supplementary_data_directory, "constanzo_stringet_2016_negative_genetic_interactions.tab"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )
+
+kable(head( constanzo_stringet_2016_negative_genetic_interactions))
+dim( constanzo_stringet_2016_negative_genetic_interactions)
+```
+
+## Protein interaction networks
+```{r}
+
+
+raw_sbi_interactome_joined <- sqldf(  " select gene_names_a.gene_name as gene_name_a
+,oln_id_a
+,gene_names_a.description as gene_description_a
+
+,gene_names_b.gene_name as gene_name_b
+,oln_id_b
+,gene_names_b.description as gene_description_b
+
+,pubmed_id
+,expt_system
+,source_table
+,ppi.description
+,author
+			from raw_sbi_interactome ppi
+					left join gene_names as gene_names_a
+																on ppi.oln_id_a = gene_names_a.oln_id
+                                                          left join gene_names as gene_names_b
+																on ppi.oln_id_b = gene_names_b.oln_id;")
+
+write.table ( raw_sbi_interactome_joined, 
+			  file.path(supplementary_data_directory, "protein-protein_interactions.tab"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )
+
+
+kable(head(raw_sbi_interactome_joined ))
+dim( raw_sbi_interactome_joined)
+
+```
+
+
+## Kinase-substrate network
+```{r}
+
+kinase_network_filtered <- dplyr::filter( kinase_network, score > sharifpoor_kinase_substrate_network_threshold) %>%
+							dplyr::select(-interaction_id) %>%
+							dplyr::select(one_of ( c("kinase_gene_name", "kinase_oln_id", "target_gene_name", "target_oln_id", "score" )))
+
+kinase_network_filtered <- sqldf( " select gene_names_a.gene_name as kinase_gene_name
+									, kinase_oln_id         
+									, gene_names_a.description as kinase_gene_description
+									
+									, gene_names_b.gene_name as target_gene_name
+									, target_oln_id
+									, gene_names_b.description as target_gene_description
+									
+									, score            
+										from kinase_network_filtered kinase_substrate
+										left join gene_names as gene_names_a 
+														on kinase_substrate.kinase_oln_id = gene_names_a.oln_id
+                                        left join gene_names as gene_names_b
+														on kinase_substrate.target_oln_id = gene_names_b.oln_id;")
+
+write.table ( kinase_network_filtered, file.path(supplementary_data_directory, "kinase-substrate_interactions.tab"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )	
+
+
+kable(head(kinase_network_filtered))
+dim(kinase_network_filtered)
+
+```
+
+
+## Transcriptional regulatory network
+```{r}
+
+tf_network_filtered <- dplyr::filter( tf_network, gene_expression_evidence + binding_evidence >= 2 | combinatorial_evidence >= 1 ) 
+
+tf_network_filtered <- sqldf( " select gene_names_a.gene_name as regulator_gene_name
+								, regulator_oln_id         
+								, gene_names_a.description as regulator_gene_description
+								
+								, gene_names_b.gene_name as target_gene_name
+								, target_oln_id
+								, gene_names_b.description as target_gene_description
+								
+								, gene_expression_evidence 
+								, binding_evidence         
+								, combinatorial_evidence   
+								, regulation_direction    
+								, pubmed_id              
+									from tf_network_filtered tf
+									left join gene_names as gene_names_a 
+												on tf.regulator_oln_id = gene_names_a.oln_id
+                                    left join gene_names as gene_names_b
+												on tf.target_oln_id = gene_names_b.oln_id;")
+
+write.table ( tf_network_filtered, file.path(supplementary_data_directory, "transcription_factor-target_gene_interactions.tab"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )	
+
+kable(head( tf_network_filtered))
+dim( tf_network_filtered)
+
+```
+
+## Build phenotype master table 
+```{r}
+
+toxic_upon_overexpression <- toxic_upon_overexpression %>%
+								dplyr::select ( one_of ( c( "oln_id"))) %>%
+								dplyr::mutate ( overexpression_toxic = 1)
+
+essential_genes <- essential_genes %>%
+						dplyr::mutate ( essential = 1)
+
+
+cell_cycle_peak_times_of_orfs <- cell_cycle_peak_times_of_orfs %>%
+									dplyr::mutate ( periodically_expressed = 1)
+
+
+essential_periodic_expression_toxic_overexpression <- toxic_upon_overexpression %>%
+														full_join ( essential_genes ) %>% 
+														full_join (  cell_cycle_peak_times_of_orfs ) 
+
+
+
+essential_periodic_expression_toxic_overexpression [is.na( essential_periodic_expression_toxic_overexpression  ) ] <- 0
+
+
+essential_periodic_expression_toxic_overexpression <- essential_periodic_expression_toxic_overexpression %>%
+ 														dplyr::group_by ( oln_id) %>%
+ 														dplyr::summarise( overexpression_toxic = sum( overexpression_toxic), 
+ 																   essential = sum( essential), 
+ 																   periodically_expressed = sum( periodically_expressed))
+
+
+essential_periodic_expression_toxic_overexpression <- full_join ( essential_periodic_expression_toxic_overexpression, gene_names ) %>%
+													  dplyr::mutate ( overexpression_toxic = ifelse(is.na(overexpression_toxic), 0, overexpression_toxic),
+													  				  essential = ifelse(is.na(essential), 0, essential),
+													  				  periodically_expressed = ifelse(is.na(periodically_expressed), 
+													  				  								  0, periodically_expressed)
+													  				)
+
+write.table ( essential_periodic_expression_toxic_overexpression, 
+			  file.path(supplementary_data_directory, "phenotype_table.tab"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )
+
+kable(head( essential_periodic_expression_toxic_overexpression))
+dim( essential_periodic_expression_toxic_overexpression)
+
+```
+
+
+
+## Paralogs and Ohnologs
+```{r}
+
+orthomcl_paralogs <- clean_graph_table  (orthomcl_paralogs,  "oln_id_a", "oln_id_b", directed=FALSE ) %>%
+					 dplyr::mutate( type="paralog")
+
+sgd_ohnologs 	  <- clean_graph_table  (sgd_paralogs,  "oln_id_a", "oln_id_b", directed=FALSE ) %>% # This table actually contain ohnologs
+					 dplyr::mutate( type="ohnolog") 
+
+all_paralogs_and_ohnologs <- dplyr::union ( orthomcl_paralogs, sgd_ohnologs) %>%
+							 dplyr::arrange( type) %>%
+							 dplyr::group_by( oln_id_a, oln_id_b) %>%
+							 dplyr::summarise( type=paste( type, collapse=", ")) %>%
+							 dplyr::arrange(oln_id_a, oln_id_b)
+
+all_paralogs_and_ohnologs <- sqldf( " select gene_names_a.gene_name as gene_name_a
+									, oln_id_a         
+									, gene_names_a.description as gene_description_a
+									
+									, gene_names_b.gene_name as gene_name_b
+									, oln_id_b
+									, gene_names_b.description as gene_description_b
+									
+									, type            
+										from all_paralogs_and_ohnologs 
+										left join gene_names as gene_names_a 
+														on all_paralogs_and_ohnologs.oln_id_a = gene_names_a.oln_id
+                                        left join gene_names as gene_names_b
+														on all_paralogs_and_ohnologs.oln_id_b = gene_names_b.oln_id;")
+
+# all_paralogs_and_ohnologs %>%
+# 	dplyr::filter( grepl(",", type) )
+
+write.table ( all_paralogs_and_ohnologs, file.path(supplementary_data_directory, "all_paralogs_and_ohnologs.tab"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )	
+
+kable(head(all_paralogs_and_ohnologs))
+dim(all_paralogs_and_ohnologs)
+
+```
+
+
+
+
+## All interactions combined together  (part 1)
+```{r}
+
+# Cleaning transcription factor-target gene interactions
+tf_network_collated <- tibble::as_tibble(tf_network) %>%
+						clean_graph_table ( "regulator_oln_id", "target_oln_id", directed=TRUE) %>%
+						collate_interactions_from_both_direction( "regulator_oln_id", "target_oln_id", 
+																	   "transcription factor-target down", "transcription factor-target up",
+																	   "td", "tu", 
+																	   "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev")
+
+# Cleaning kinase-substrate interactions
+kinase_network_subset <- subset(kinase_network, score > sharifpoor_kinase_substrate_network_threshold)
+
+kinase_network_collated <- 	tibble::as_tibble(kinase_network_subset) %>%
+     clean_graph_table ( "kinase_oln_id", "target_oln_id", directed=TRUE) %>%
+	collate_interactions_from_both_direction( "kinase_oln_id", "target_oln_id", 
+													 "kinase-substrate down", "kinase-substrate up",
+													 "kd", "ku", 
+													 "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev") 
+
+
+
+# Cleaning SBI interactome
+sbi_interactome <-  dplyr::select ( raw_sbi_interactome, one_of(c("oln_id_a", "oln_id_b")) ) %>% 
+					dplyr::distinct()
+
+sbi_interactome_collated <-  tibble::as_tibble(sbi_interactome) %>%
+								clean_graph_table ( "oln_id_a", "oln_id_b", directed=FALSE) %>%
+								collate_interactions_from_both_direction(  "oln_id_a", "oln_id_b", 
+																			 "protein-protein", "protein-protein",
+																			 "p", "p", 
+																			 "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev") 
+
+# Cleaning the negative genetic interactions network
+
+costanzo_2016_stringent_gi_collated <-  filtered_costanzo_stringent_2016 %>% 
+	dplyr:: filter ( genetic_interaction_score < costanzo_stringent_negative_gi_score_threshold & 
+					 	p_value < costanzo_stringent_negative_gi_p_value_threshold & 
+					 	abs ( std_dev ) < costanzo_stringent_negative_gi_std_dev_threshold) %>%
+	tibble::as_tibble() %>%
+	clean_graph_table ( "query_oln_id_edited", "array_oln_id_edited", directed=FALSE) %>%
+	collate_interactions_from_both_direction(  "query_oln_id_edited", "array_oln_id_edited",
+											   "negative genetic interaction", "negative genetic interaction",
+											   "ng", "ng",
+											   "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev")
+
+
+# All interactions combined together
+interactions_combined <- dplyr::bind_rows(tf_network_collated, kinase_network_collated, sbi_interactome_collated, costanzo_2016_stringent_gi_collated)
+
+
+interactions_combined <- sqldf( " select gene_names_a.gene_name as gene_name_a
+									, oln_id_a
+									, gene_names_a.description as gene_description_a
+									
+									, gene_names_b.gene_name as gene_name_b
+									, oln_id_b
+									, gene_names_b.description as gene_description_b
+									
+									, interaction_type
+									, interaction_type_abbrev
+								  from interactions_combined 
+										left join gene_names as gene_names_a 
+														on interactions_combined.oln_id_a = gene_names_a.oln_id
+                                        left join gene_names as gene_names_b
+														on interactions_combined.oln_id_b = gene_names_b.oln_id;")
+
+
+kable(head(interactions_combined))
+dim(interactions_combined)
+
+
+```
+
+
+
+## Get densely annotated triplets 
+```{r}
+
+densely_annotated_triplet_motif <- sqldf( "select data_a.gene_name as gene_name_a
+, motifs.oln_id_a
+, data_a.description as gene_description_a
+
+, data_b.gene_name as gene_name_b
+, motifs.oln_id_b
+, data_b.description as gene_description_b
+
+, data_c.gene_name as gene_name_c
+, motifs.oln_id_c
+, data_c.description as gene_description_c
+
+, upper(motifs.type_ac) as type_of_interaction_a_to_c
+, upper(motifs.type_bc) as type_of_interaction_b_to_c
+, case when type_ac > type_bc then upper( type_ac || type_bc ) else upper( type_bc || type_ac ) end as type_of_motif
+, case when data_a.essential = 1 and data_b.essential = 1 and data_c.essential = 1 then 1 else 0 end as all_proteins_essential
+, case when data_a.periodically_expressed = 1 and data_b.periodically_expressed = 1 and data_c.periodically_expressed = 1 then 1 else 0 end as all_proteins_periodically_expressed
+, case when data_a.overexpression_toxic = 1 and data_b.overexpression_toxic = 1 and data_c.overexpression_toxic = 1 then 1 else 0 end as all_proteins_toxic_upon_protein_expression
+
+, data_a.essential as is_protein_a_essential
+, data_a.periodically_expressed as is_protein_a_periodically_expressed
+, data_a.overexpression_toxic as is_protein_a_toxic_upon_overexpression
+
+, data_b.essential as is_protein_b_essential
+, data_b.periodically_expressed as is_protein_b_periodically_expressed
+, data_b.overexpression_toxic as is_protein_b_toxic_upon_overexpression
+
+, data_c.essential as is_protein_c_essential
+, data_c.periodically_expressed as is_protein_c_periodically_expressed
+, data_c.overexpression_toxic as is_protein_c_toxic_upon_overexpression
+
+from triplet_motifs_costanzo_2016  motifs
+		left outer join essential_periodic_expression_toxic_overexpression data_a
+			on data_a.oln_id = oln_id_a
+		left outer join essential_periodic_expression_toxic_overexpression data_b
+			on data_b.oln_id = oln_id_b
+		left outer join essential_periodic_expression_toxic_overexpression data_c
+			on data_c.oln_id = oln_id_c;
+", stringsAsFactors=FALSE)
+
+
+write.table ( densely_annotated_triplet_motif, file.path(supplementary_data_directory, "list_of_triplet_motifs.tab"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )
+
+kable(head( densely_annotated_triplet_motif))
+dim (densely_annotated_triplet_motif )
+```
+
+
+## Interactions that are from triplet motifs only
+```{r}
+
+gene_a <- as.character( as.vector(c( t(triplet_motifs_costanzo_2016[,1]) ,
+									 t(triplet_motifs_costanzo_2016[,1])    , 
+									 t(triplet_motifs_costanzo_2016[,2]) ) ))
+	
+gene_b <- as.character( as.vector(c( t(triplet_motifs_costanzo_2016[,2]) ,
+									 t(triplet_motifs_costanzo_2016[,3])    , 
+									 t(triplet_motifs_costanzo_2016[,3]) ) ))
+	
+edge_type_attributes <- as.character( as.vector( c( 
+		rep( "ng", length(triplet_motifs_costanzo_2016[,1] )),
+		t(triplet_motifs_costanzo_2016[, c("type_ac")]),
+		t(triplet_motifs_costanzo_2016[, c("type_bc")])
+	)  ) ) 
+	
+interactions_from_triplet_motifs <- data.frame( oln_id_a = gene_a, oln_id_b = gene_b, type_of_interaction = edge_type_attributes  )
+
+interactions_from_triplet_motifs <- sqldf( " select gene_names_a.gene_name as gene_name_a
+									, oln_id_a         
+									, gene_names_a.description as gene_description_a
+									
+									, gene_names_b.gene_name as gene_name_b
+									, oln_id_b
+									, gene_names_b.description as gene_description_b
+									
+									, type_of_interaction            
+										from interactions_from_triplet_motifs interactions 
+										left join gene_names as gene_names_a 
+														on interactions.oln_id_a = gene_names_a.oln_id
+                                        left join gene_names as gene_names_b
+														on interactions.oln_id_b = gene_names_b.oln_id;")
+
+interactions_from_triplet_motifs <- interactions_from_triplet_motifs %>% dplyr::distinct()
+
+write.table ( interactions_from_triplet_motifs, 
+			  file.path(supplementary_data_directory, "interactions_from_triplet_motifs_only.tab"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )
+
+kable(head( interactions_from_triplet_motifs))
+dim( interactions_from_triplet_motifs)
+
+```
+
+## All interactions combined together  (part 2)
+```{r}
+
+interactions_from_triplet_motifs <- dplyr::mutate(interactions_from_triplet_motifs, is_part_of_a_triplet=1) %>%
+									dplyr::rename( interaction_type_abbrev =type_of_interaction )
+
+interactions_combined <- dplyr::left_join (interactions_combined, interactions_from_triplet_motifs,
+										   by = c("gene_name_a", "oln_id_a", "gene_description_a", 
+										   	      "gene_name_b", "oln_id_b", "gene_description_b", "interaction_type_abbrev")) 
+
+interactions_combined <- dplyr::mutate( interactions_combined, is_part_of_a_triplet = ifelse( is.na(is_part_of_a_triplet), 0,1 ) )
+
+write.table ( interactions_combined, file.path(supplementary_data_directory, "all_interactions.tab"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )	
+```
+
+
+

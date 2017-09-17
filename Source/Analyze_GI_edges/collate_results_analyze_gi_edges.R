@@ -9,18 +9,21 @@ library(reshape2)
 ### Graphic width and heigth for the boxplots of the randomization results. The observed value is shown in a dot. 
 ### This setting is for the poster presentation.
 
+#  figure_file_suffix <- ".tiff"
+ figure_file_suffix <- ".pdf"
+
 ## Set the parameters for this project
 options <- commandArgs(trailingOnly = TRUE)
 source( "./Common/parameters_file.R")
 
-source_directory <- file.path( base_directory, "Source")
+source_directory <- file.path( local_base_directory, "Source")
 source_directory_common <- file.path( source_directory, "Common")
-source_poster_directory <- file.path( source_directory, "Poster")
+source_figures_directory <- file.path( source_directory, "Figures")
 source( file.path(source_directory_common, "count_triplet_motifs_helper.R") )
 source( file.path(source_directory_common, "concatenate_result_files.R") )
-source( file.path(source_poster_directory, "reshape_triplet_motifs_helper.R") )
+source( file.path(source_figures_directory, "paper_figures_helper.R") )
 
-results_directory       <- file.path( base_directory, "Results/Bootstrap_p_values/Analyze_GI_edges")
+results_directory       <- file.path( local_base_directory, "Results/Bootstrap_p_values/Analyze_GI_edges")
 final_results_directory <- file.path ( results_directory, "Final_Results")
 
 create_directory_if_not_exists(final_results_directory)
@@ -51,7 +54,7 @@ triplet_motifs_full_results_file     <- "full_results_table_analyze_gi_edge_in_t
 count_triplet_motifs_randomized_file <- "randomized_results_table.tab" 
 
 triplet_motifs_file_pattern      	 <- "^randomized_results_table.tab"
-observed_file_pattern        		 <-  "Job_20/observed_results_table_file.tab"
+observed_file_pattern        		 <- "Job_20/observed_results_table_file.tab"
 final_results_directory_pattern      <- "Final_Results"
 number_of_randomized_samples         <- 58673
 p_values 							 <- 0.05
@@ -65,8 +68,8 @@ count_triplet_motifs_observed 		<- read.table ( file.path( results_directory, ob
 
 count_triplet_motifs_observed <- fix_table_column_names(count_triplet_motifs_observed) 
 
-count_triplet_motifs_observed_gathered <- gather ( count_triplet_motifs_observed, "edge_type", "counts", 2:7) %>%
-											mutate ( counts= ifelse (is.na(counts), 0 ,counts) ) 
+count_triplet_motifs_observed_gathered <- tidyr::gather ( count_triplet_motifs_observed, "edge_type", "counts", 2:7) %>%
+										  dplyr::mutate ( counts= ifelse (is.na(counts), 0 ,counts) ) 
 
 ### Randomized 
 analyze_gi_edges_counts <- collate_randomization_result_files_into_one_table  (   results_directory, triplet_motifs_file_pattern,  
@@ -79,9 +82,9 @@ analyze_gi_edges_counts <- fix_table_column_names(analyze_gi_edges_counts)
 
 ## Adjustment for tuku 
 adjustment_for_tuku <-  analyze_gi_edges_counts %>%
-	group_by ( motif_type) %>%
-	summarise( num_rows=n()) %>% 
-	filter( motif_type== "tuku") %>%
+	dplyr::group_by ( motif_type) %>%
+	dplyr::summarise( num_rows=n()) %>% 
+	dplyr::filter( motif_type== "tuku") %>%
 	dplyr::select( one_of('num_rows')) %>%
 	as.data.frame() %>%
 	as.vector() 
@@ -108,66 +111,62 @@ analyze_gi_edges_counts <- rbind( analyze_gi_edges_counts, rows_to_add)
 # 	summarise( num_rows=n())
 
 
-analyze_gi_edges_counts_gathered <- gather ( analyze_gi_edges_counts, "edge_type", "counts", 2:7) %>%
-									mutate ( counts= ifelse (is.na(counts), 0 ,counts) ) 
-
-
-
+analyze_gi_edges_counts_gathered <- tidyr::gather ( analyze_gi_edges_counts, "edge_type", "counts", 2:7) %>%
+									dplyr::mutate ( counts= ifelse (is.na(counts), 0 ,counts) ) 
 
 ### Compare the two to get a p-value 
 
-joined_table <- left_join ( analyze_gi_edges_counts_gathered, count_triplet_motifs_observed_gathered, 
-							by =c ( "motif_type" = "motif_type", "edge_type"= "edge_type")) %>%
+joined_table <- dplyr::left_join ( analyze_gi_edges_counts_gathered, count_triplet_motifs_observed_gathered, 
+							       by =c ( "motif_type" = "motif_type", "edge_type"= "edge_type")) %>%
 				dplyr::rename( randomized_counts = counts.x, observed_counts = counts.y )  
 
 
 ### Replace NA with zeros
 
-joined_table <- mutate (joined_table, randomized_counts= ifelse (is.na(randomized_counts), 0 ,randomized_counts) ) %>%
-				mutate ( observed_counts= ifelse (is.na(observed_counts), 0 ,observed_counts) ) 
+joined_table <- dplyr::mutate (joined_table, randomized_counts= ifelse (is.na(randomized_counts), 0 ,randomized_counts) ) %>%
+				dplyr::mutate ( observed_counts= ifelse (is.na(observed_counts), 0 ,observed_counts) ) 
 	
 
 ## Observed Count if greater than Randomized count, 1, else 0 
-joined_table_summarized <- mutate( joined_table, obs_greater_than_random = ifelse(observed_counts > randomized_counts, 0, 1 )) %>%
-				group_by ( motif_type, edge_type, observed_counts ) %>%
-				summarise( p_value=sum(obs_greater_than_random )/4000,   
-						  mean=mean(randomized_counts), 
-						  sd =sd( randomized_counts), 
-						  median = median( randomized_counts), 
-						  mad = mad(randomized_counts ) 
-						  ) %>%
-				as.data.frame()
+joined_table_summarized <- dplyr::mutate( joined_table, obs_greater_than_random = ifelse(observed_counts > randomized_counts, 0, 1 )) %>%
+						   dplyr::group_by ( motif_type, edge_type, observed_counts ) %>%
+						   dplyr::summarise( p_value=sum(obs_greater_than_random )/4000,   
+												  mean=mean(randomized_counts), 
+												  sd =sd( randomized_counts), 
+												  median = median( randomized_counts), 
+												  mad = mad(randomized_counts ) ) %>%
+						   as.data.frame()
 
 ### Filter for the motif types that I need 
 
-joined_table_summarized_filtered <- filter (joined_table_summarized, motif_type %in% c( "pp", 'kuku', 'tutu', 'tdp', 'ptd','pku', 'pkd' )  ) 
+joined_table_summarized_filtered <- dplyr::filter (joined_table_summarized, motif_type %in% c( "pp", 'kuku', 'tutu', 'tdp', 'ptd','pku', 'pkd' )  ) 
 
-analyze_gi_edges_counts_gathered <- filter (analyze_gi_edges_counts_gathered, motif_type %in% 
+analyze_gi_edges_counts_gathered <- dplyr::filter (analyze_gi_edges_counts_gathered, motif_type %in% 
 												  	c( "pp", 'kuku', 'tutu', 'tdp', 'ptd', 'pku', 'pkd' )  ) 
 
 
 #################################################################################################################################################
 ### Bonferroni adjustment
-joined_table_summarized_filtered <- mutate (joined_table_summarized_filtered,  p_value = ifelse( p_value *number_to_use_for_bonferroni_adjustment >1, 
+joined_table_summarized_filtered <- dplyr::mutate (joined_table_summarized_filtered,  p_value = ifelse( p_value *number_to_use_for_bonferroni_adjustment >1, 
 																								 1, 
 																								 p_value*number_to_use_for_bonferroni_adjustment) )
 
 ## Convert significance to colour 
-sum_per_motif_type <- group_by (joined_table_summarized_filtered, motif_type ) %>%
-						summarise( total_per_motif_type=sum(observed_counts) )
+sum_per_motif_type <- dplyr::group_by (joined_table_summarized_filtered, motif_type ) %>%
+					  dplyr::summarise( total_per_motif_type=sum(observed_counts) )
 
-joined_table_summarized_filtered <- left_join ( joined_table_summarized_filtered, sum_per_motif_type, by="motif_type") %>%
-										mutate( is_significant =  ifelse( p_value < p_values & 
+joined_table_summarized_filtered <- dplyr::left_join ( joined_table_summarized_filtered, sum_per_motif_type, by="motif_type") %>%
+									dplyr::mutate( is_significant =  ifelse( p_value < p_values & 
 																		  	total_per_motif_type*false_positive_rates < observed_counts, 1, 0 )    )
 
 
-joined_table_summarized_filtered <- mutate ( joined_table_summarized_filtered, color=ifelse ( is_significant==1, 'red', 'blue'))
+joined_table_summarized_filtered <- dplyr::mutate ( joined_table_summarized_filtered, color=ifelse ( is_significant==1, 'red', 'blue'))
 
 #################################################################################################################################################
 
 #### Clean motif names
-joined_table_summarized_filtered <- mutate ( joined_table_summarized_filtered, edge_type=ifelse(edge_type=='NA', "na", edge_type))
-analyze_gi_edges_counts_gathered <- mutate ( analyze_gi_edges_counts_gathered, edge_type=ifelse(edge_type=='NA', "na", edge_type))
+joined_table_summarized_filtered <- dplyr::mutate ( joined_table_summarized_filtered, edge_type=ifelse(edge_type=='NA', "na", edge_type))
+analyze_gi_edges_counts_gathered <- dplyr::mutate ( analyze_gi_edges_counts_gathered, edge_type=ifelse(edge_type=='NA', "na", edge_type))
 
 joined_table_summarized_filtered[,"motif_type"] <- convert_triplet_motifs_name_to_paper_style( 
 																	joined_table_summarized_filtered[,"motif_type"] )
@@ -179,21 +178,23 @@ analyze_gi_edges_counts_gathered[,"motif_type"] <- convert_triplet_motifs_name_t
 
 ## Clean edge type names
 joined_table_summarized_filtered[,"edge_type"] <- convert_edge_type_name_to_paper_style( 
-	joined_table_summarized_filtered[,"edge_type"] )
+													joined_table_summarized_filtered[,"edge_type"] )
 
 analyze_gi_edges_counts_gathered[,"edge_type"] <- convert_edge_type_name_to_paper_style( 
-	analyze_gi_edges_counts_gathered[,"edge_type"] )
+													analyze_gi_edges_counts_gathered[,"edge_type"] )
 
 ### Order the data 
-motif_type_levels_order <- c('PP', 'TUTU', 'PKU', 'KUKU',  'TDP', 'PKD')
-edge_type_levels_order  <- c( 'None', 'P', 'K1', 'K2',  'T1', 'T2')
+# motif_type_levels_order <- c('PP', 'TUTU', 'PKU', 'KUKU',  'TDP', 'PKD')
 
+motif_type_levels_order <- c('PP', 'TUTU', 'TDP', 'PKU', 'KUKU', 'PKD')
+
+edge_type_levels_order  <- c( 'None', 'P', 'K1', 'K2',  'T1', 'T2')
 
 # motif_type_levels_order <- convert_triplet_motifs_name_to_paper_style( motif_type_levels_order)
 # edge_type_levels_order  <- convert_edge_type_name_to_paper_style(edge_type_levels_order)
 
-joined_table_summarized_filtered <- mutate ( joined_table_summarized_filtered, edge_type=ifelse(edge_type=='NA', "na", edge_type))
-analyze_gi_edges_counts_gathered <- mutate ( analyze_gi_edges_counts_gathered, edge_type=ifelse(edge_type=='NA', "na", edge_type))
+joined_table_summarized_filtered <- dplyr::mutate ( joined_table_summarized_filtered, edge_type=ifelse(edge_type=='NA', "na", edge_type))
+analyze_gi_edges_counts_gathered <- dplyr::mutate ( analyze_gi_edges_counts_gathered, edge_type=ifelse(edge_type=='NA', "na", edge_type))
 
 joined_table_summarized_filtered[, "motif_type"] <- factor ( joined_table_summarized_filtered[,"motif_type"], levels=motif_type_levels_order)
 analyze_gi_edges_counts_gathered[, "motif_type"] <- factor ( analyze_gi_edges_counts_gathered[,"motif_type"], levels=motif_type_levels_order)
@@ -210,43 +211,5 @@ write.table ( analyze_gi_edges_counts_gathered, file=file.path( final_results_di
 			  row.names=FALSE, quote=FALSE )
 
 #################################################################################################################################################
-# 
-# ### Plot the data 
-ggplot_analyze_gi_edges <- ggplot(analyze_gi_edges_counts_gathered, aes(edge_type, counts)) +
-	geom_boxplot() +
-	## Add the observed values as additional points
-	geom_point( data=joined_table_summarized_filtered, aes(x=edge_type, y=observed_counts, color=color ),
-				 size=4 , alpha=0.5) 	+
-	scale_color_identity()
-# 
-# ## Without wrapping 
-# ggplot_analyze_gi_edges + 
-# 	## Add faceting
-# 	facet_grid (motif_type ~ . , scales="free") +
-# 	xlab( "Types of Motifs") 	+ 
-# 	ylab( "Counts") + 
-# 	theme( axis.text.x=element_text(face="italic") ,  strip.text.y=element_text(face="italic") )
-# 
-# ggsave(file.path(final_results_directory, "analyze_gi_edges.tiff"), plot=last_plot(), width=5, height=10 )
-
-### With wrapping
-ggplot_analyze_gi_edges + 
-	## Add faceting
-	facet_wrap ( ~ motif_type , scales="free") +
-	xlab( "Types of Motifs") 	+ 
-	ylab( "Counts") + 
-	theme( axis.text.x=element_text(face="italic") ,  strip.text.x=element_text(face="italic") )
-
- ggsave(file.path(final_results_directory, "analyze_gi_edges_wrap.tiff"), plot=last_plot(), width=10, height=7 )
-
-
-
-#################################################################################################################################################
-
-
-
-
-
-
 
 

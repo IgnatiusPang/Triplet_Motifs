@@ -72,9 +72,9 @@ red <- '#FF0000'
 black <- '#000000'
 green <- '#00FF00'
 grey <- '#808080'
-	
-triplet_motif_network_display_style <- function(cw) {
 
+triplet_motif_network_display_style <- function(cw) {
+	
 	setEdgeColorRule(cw, 'edgeType',
 					 control.points=c( 'ku', 'kd', 'gi', 'tu', 'td', 'p'), 
 					 colors=c(blue, blue, green, red, red, black), 
@@ -106,26 +106,26 @@ triplet_motif_network_display_style <- function(cw) {
 		
 	}
 	
-
+	
 	if ( 'Domain..predominant.' %in% noa.names(getGraph(cw))) {
 		
 		setNodeColorRule(cw, "Domain..predominant.", control.points=1:17, colors= c( "#CCCCCC"
-            , "#000000"																					 
-			,"#00FFCC"	
-			,"#000099"	
-			,"#CC9900"	
-			,"#990099"	
-			,"#999900"	
-			,"#00FFCC"	
-			,"#CC33FF"	
-			,"#00CC99"	
-			,"#33CC00"	
-			,"#996600"	
-			,"#66FF99"	
-			,"#CC0033"	
-			,"#6666FF"	
-			,"#33FF99"	
-			,"#CCCCFF"), mode='lookup')
+																					 , "#000000"																					 
+																					 ,"#00FFCC"	
+																					 ,"#000099"	
+																					 ,"#CC9900"	
+																					 ,"#990099"	
+																					 ,"#999900"	
+																					 ,"#00FFCC"	
+																					 ,"#CC33FF"	
+																					 ,"#00CC99"	
+																					 ,"#33CC00"	
+																					 ,"#996600"	
+																					 ,"#66FF99"	
+																					 ,"#CC0033"	
+																					 ,"#6666FF"	
+																					 ,"#33FF99"	
+																					 ,"#CCCCFF"), mode='lookup')
 	}
 	
 }
@@ -170,23 +170,23 @@ draw_pairwise_interactions <- function ( edge_list, network_name ) {
 			}
 			
 			graph_nel_object <- initEdgeAttribute (graph_nel_object, edge_attribute_name, "char", edge_list[1,i])
-		
+			
 			graph_nel_object <- graph::addEdge(gene_a, gene_b, graph_nel_object) 
 			
 			edge_type_attributes <- as.character( as.vector( t( edge_list[,i] )  ) ) 
 			
 			edgeData( graph_nel_object, gene_a, gene_b, edge_attribute_name) <- edge_type_attributes
-		
+			
 		}
 		
 	}
-
+	
 	#######################################################################################################################
 	
 	### Create the network visualization
 	
 	cw <- setGraph(cw, graph_nel_object)
-
+	
 	
 	return (cw )
 }
@@ -250,7 +250,7 @@ add_node_attributes <- function ( cw, node_attributes, node_key_column ) {
 		
 		attribute.type 	      <- type_and_default_value$attribute.type
 		default.value         <- type_and_default_value$default.value
-
+		
 		if ( current_column_name != node_key_column ) {
 			
 			graph_nel_object <- initNodeAttribute( graph=graph_nel_object, 
@@ -269,7 +269,7 @@ add_node_attributes <- function ( cw, node_attributes, node_key_column ) {
 	}
 	
 	cw <- setGraph(cw, graph_nel_object)
-
+	
 	
 	return(cw)
 	

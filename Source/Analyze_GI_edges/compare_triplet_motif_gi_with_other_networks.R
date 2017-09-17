@@ -151,30 +151,31 @@ count_triplet_motifs_compare_with_other_networks_second_step <- function (negati
 
 count_triplet_motifs_compare_with_other_networks <- function (triplet_motifs, type_ac, type_bc, interaction_type_abbrev, my_counts, total_count ) {
 	
-	a_ge_b <- filter_( triplet_motifs, paste(type_ac, ">=", type_bc) ) %>%
-		group_by_( .dots=lapply ( c(type_ac, type_bc, interaction_type_abbrev), as.name)  ) %>%
-		summarise_( .dots= list(counts=interp( ~sum(x), x=as.name(my_counts))) )
+	a_ge_b <- dplyr::filter_( triplet_motifs, paste(type_ac, ">=", type_bc) ) %>%
+			  dplyr::group_by_( .dots=lapply ( c(type_ac, type_bc, interaction_type_abbrev), as.name)  ) %>%
+			  dplyr::summarise_( .dots= list(counts=interp( ~sum(x), x=as.name(my_counts))) )
 	
 	columns_to_select <- c(type_ac, type_bc, interaction_type_abbrev, "counts")
 	
-	b_gt_a <- filter_( triplet_motifs, paste(type_bc, ">", type_ac) ) %>%
-		group_by_( .dots=lapply ( c(type_ac, type_bc, interaction_type_abbrev), as.name) ) %>%
-		summarise_( .dots= list(counts=interp( ~sum(x), x=as.name(my_counts))) ) %>%
-		dplyr::rename_( .dots=setNames(list(type_ac, type_bc, interaction_type_abbrev), c(type_bc, type_ac, interaction_type_abbrev) ) ) %>%
-		select( one_of( columns_to_select ))
+	b_gt_a <- dplyr::filter_( triplet_motifs, paste(type_bc, ">", type_ac) ) %>%
+			  dplyr::group_by_( .dots=lapply ( c(type_ac, type_bc, interaction_type_abbrev), as.name) ) %>%
+			  dplyr::summarise_( .dots= list(counts=interp( ~sum(x), x=as.name(my_counts))) ) %>%
+			  dplyr::rename_( .dots=setNames(list(type_ac, type_bc, interaction_type_abbrev), 
+			  							   c(type_bc, type_ac, interaction_type_abbrev) ) ) %>%
+		      dplyr::select( one_of( columns_to_select ))
 	
 	b_gt_a <- as.data.frame( b_gt_a )
 	
 	b_gt_a[,interaction_type_abbrev] <- sapply(b_gt_a[,interaction_type_abbrev],
 											   fix_edge_attribute_direction)
 	
-	b_gt_a <- dplyr::tbl_df(b_gt_a)
+	b_gt_a <- tibble::as_tibble(b_gt_a)
 	
 	triplet_motif_counts <- dplyr::bind_rows( a_ge_b, b_gt_a)  %>%
-		group_by_( .dots=lapply ( c(type_ac, type_bc, interaction_type_abbrev), as.name) ) %>%	
-		summarise( temp_counts=sum(counts))  %>%
+		dplyr::group_by_( .dots=lapply ( c(type_ac, type_bc, interaction_type_abbrev), as.name) ) %>%	
+		dplyr::summarise( temp_counts=sum(counts))  %>%
 		dplyr::rename_( .dots=setNames(list("temp_counts"), c(total_count) ) ) %>%
-		arrange_( .dots=c(type_ac, type_bc) )
+		dplyr::arrange_( .dots=c(type_ac, type_bc) )
 	
 	# as.data.frame( a_ge_b ) %>% filter ( type_ac %in% c('td', 'p') & type_bc %in% c('td', 'p') & type_ac != type_bc)
 	# as.data.frame( b_gt_a ) %>% filter ( type_ac %in% c('td', 'p') & type_bc %in% c('td', 'p') & type_ac != type_bc)

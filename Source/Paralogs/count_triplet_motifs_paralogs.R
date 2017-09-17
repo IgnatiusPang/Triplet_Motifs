@@ -113,7 +113,7 @@ gi_and_paralog_table_b <- inner_join ( orthomcl_paralogs_table, filtered_costanz
 																		  "oln_id_a" = "array_oln_id_edited" ))  %>%
 	dplyr::select(one_of (c('oln_id_a', 'oln_id_b')) ) 
 
-result_table <- union ( gi_and_paralog_table_a, gi_and_paralog_table_b)
+result_table <- dplyr::union ( gi_and_paralog_table_a, gi_and_paralog_table_b)
 
 ##### 
 

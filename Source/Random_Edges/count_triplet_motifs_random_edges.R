@@ -138,19 +138,19 @@ run_add_or_remove_edges_once <- function(iteration_holder, filtered_costanzo_str
 ### Createa a table that include all kinase-substrate, protein-protein and transcription factor-gene interactions
 ### Do not contain genetic interactions
 
-tf_network_collated <- collate_interactions_from_both_direction_tbl_df(tbl_df(tf_network), "regulator_oln_id", "target_oln_id",
+tf_network_collated <- collate_interactions_from_both_direction(tibble::as_tibble(tf_network), "regulator_oln_id", "target_oln_id",
                                                                        "transcription factor-target down", "transcription factor-target up",
                                                                        "td", "tu",
                                                                        "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev")
 
 
-kinase_network_collated <- 	tbl_df(kinase_network_subset) %>%
-  collate_interactions_from_both_direction_tbl_df( "kinase_oln_id", "target_oln_id",
+kinase_network_collated <- tibble::as_tibble(kinase_network_subset) %>%
+						   collate_interactions_from_both_direction( "kinase_oln_id", "target_oln_id",
                                                    "kinase-substrate down", "kinase-substrate up",
                                                    "kd", "ku",
                                                    "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev")
 
-sbi_interactome_collated <- collate_interactions_from_both_direction_tbl_df( tbl_df(sbi_interactome), "oln_id_a", "oln_id_b",
+sbi_interactome_collated <- collate_interactions_from_both_direction( tibble::as_tibble(sbi_interactome), "oln_id_a", "oln_id_b",
                                                                              "protein-protein", "protein-protein",
                                                                              "p", "p",
                                                                              "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev")

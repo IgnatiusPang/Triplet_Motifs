@@ -7,40 +7,59 @@ output:
 Author: Ignatius Pang
 ---
 
-Description: I want to visualize the network, which consists of all the triplet motifs. Only edges in triplet motifs are shown.
+## Description
+I want to visualize the network and draw network figures for the manuscript. 
 
 
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath("..")) 
+```
+
+
+## Load libraires
 ```{r}
 library(RCy3)
+library(plyr)
 library(dplyr)
-library(RODBC)
 library(sqldf)
+
+sessionInfo()
 ```
 
 
 
 
-Read helper functions 
+## Read helper functions 
 ```{r}
-# cd '/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/Poster/'
+# cd '/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/Poster/'
 
 ## Load the root base directory for the entire project
 options <- commandArgs(trailingOnly = TRUE)
-source( "./Common/parameters_file.R")
+# setwd( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Source")
 
-setwd ( file.path( base_directory, 'Source/Figures') ) 
+source( file.path( getwd(), "Common/parameters_file.R") ) 
 
 source( file.path ( source_directory_common, 'draw_triplet_motif_network_helper.R') ) 
+source( file.path ( source_directory_common, 'count_triplet_motifs_helper.R'))
 
+supplementary_data_directory <- file.path(results_directory, "Supplementary_Files" ) 
+create_directory_if_not_exists(supplementary_data_directory)
+
+list_of_triplets_directory <- '/home/ignatius/PostDoc/2016/Triplet_Motifs/Data/Triplet_Motifs_R_data'
 ```
 
-Read data tables 
+## Read data tables 
 ```{r}
+results_directory <- file.path(   local_base_directory, "Results" ) 
+networks_directory <- file.path ( results_directory, "Figures/Networks")
+
 triplet_motifs_costanzo_2016 <- read.table ( file.path( list_of_triplets_directory, "triplet_motifs_costanzo_2016.txt"), 
 											 header =TRUE , stringsAsFactors = FALSE)
 
-triplet_motifs_costanzo_2016 <- triplet_motifs_costanzo_2016 %>% 
-								dplyr::rename( oln_id_a = node_a, oln_id_b = node_b, oln_id_c = node_c)
+if ( ! ( "oln_id_a" %in% colnames( triplet_motifs_costanzo_2016) ) ) {
+	triplet_motifs_costanzo_2016 <- triplet_motifs_costanzo_2016 %>%
+								dplyr::rename(  oln_id_a = node_a , oln_id_b =  node_b ,  oln_id_c = node_c  )
+}
 
 toxic_upon_overexpression <- read.table ( file.path( data_directory, "overexpressed_toxic_genes.txt"), header=TRUE , stringsAsFactors = FALSE)
 
@@ -49,17 +68,18 @@ essential_genes <- read.table ( file.path( data_directory, "essential_genes.txt"
 cell_cycle_peak_times_of_orfs <- read.table ( file.path( data_directory, "periodically_expressed_genes.txt"), header=TRUE, stringsAsFactors = FALSE)
 
 gene_names <- read.table ( file.path(data_directory, "gene_names_table.txt"), sep="\t", header=TRUE, stringsAsFactors = FALSE, 
-						    na.strings="", quote="")
+						    na.strings="", quote="\"")
 
 
 ## Results from Spatial Analysis of Functional Enrichment (SAFE tool)
 
-enriched_functions <- read.table ( file.path( results_directory, "SAFE/safe_exported_reports_20161123.txt-node_properties_annotation-highest.txt"), sep="\t", header=TRUE, stringsAsFactors = FALSE, 
-						    na.strings="", quote="")
+enriched_functions <- read.table ( file= file.path( results_directory, "SAFE/20161123/Triplet_Motifs/safe_exported_reports_20161123.txt-node_properties_annotation-highest.txt"), 
+								   header=TRUE, stringsAsFactors = TRUE, 
+						    na.strings="", quote="", sep="\t")
 
 ```
 
-Build phenotype master table 
+## Build phenotype master table 
 ```{r}
 
 toxic_upon_overexpression <- toxic_upon_overexpression %>%
@@ -84,14 +104,21 @@ essential_periodic_expression_toxic_overexpression [is.na( essential_periodic_ex
 
 
 essential_periodic_expression_toxic_overexpression <- essential_periodic_expression_toxic_overexpression %>%
- 														group_by ( oln_id) %>%
- 														summarise( overexpression_toxic = sum( overexpression_toxic), 
+ 														dplyr::group_by ( oln_id) %>%
+ 														dplyr::summarise( overexpression_toxic = sum( overexpression_toxic), 
  																   essential = sum( essential), 
  																   periodically_expressed = sum( periodically_expressed))
 
+
+write.table ( essential_periodic_expression_toxic_overexpression, 
+			  file.path(supplementary_data_directory, "essential_periodic_expression_toxic_overexpression.txt"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )
+
 ```
 
-Get densely annotated triplets 
+## Get densely annotated triplets 
 ```{r}
 
 densely_annotated_triplet_motif <- sqldf( "select motifs.* 
@@ -128,11 +155,200 @@ from triplet_motifs_costanzo_2016  motifs
 ", stringsAsFactors=FALSE)
 
 
+write.table ( densely_annotated_triplet_motif, file.path(supplementary_data_directory, "densely_annotated_triplet_motif.txt"),
+			  sep="\t", 
+			  quote=FALSE,
+			  row.names = FALSE  )
+
+
+```
+
+
+## Figure 5c. A genetic interaction overlapping with multiple triplets. Focus on protein complexes. 
+```{r}
+
+list_of_gi <- count_repeated_gi_in_triplet_motifs_look_at_gi( triplet_motifs_costanzo_2016 ) %>%
+			  dplyr::filter( motif_type != "others") %>%
+			  dplyr::filter (motif_type == 'protein_complexes') %>%
+			  dplyr::filter ( counts == '4') %>%
+			  # TIM complex YHR083W, YGR082W	  
+			  dplyr::filter ( (oln_id_a == 'YHR083W' & oln_id_b == 'YGR082W') |
+			  				  (oln_id_a == 'YGR082W' & oln_id_b == 'YHR083W')  )
+
+selected_regulatory_triplets <- triplet_motifs_costanzo_2016 %>%
+	dplyr::right_join ( list_of_gi) %>%
+	dplyr::filter(	type_ac == 'p'  & type_bc == 'p' )  %>%
+	dplyr::select ( one_of( c( "oln_id_a", "oln_id_b", "oln_id_c", "type_ac", "type_bc", "genetic_interaction_score" ))) %>%
+	as.data.frame()
+
+cw <- draw_triplet_motif_network  ( selected_regulatory_triplets, 'Tightly regulated proteins' ) 
+
+cw <- add_node_attributes(cw, gene_names , "oln_id")
+
+cw <- add_node_attributes ( cw, enriched_functions, "Node.label.ORF")
+
+displayGraph(cw)
+	
+triplet_motif_network_display_style(cw) 
+
+redraw (cw)
+
+current_example_dir <- file.path( networks_directory, "Repeated_GI_Example")
+
+create_directory_if_not_exists( current_example_dir) 
+
+## saveNetwork command currently not working for unknown reasons
+Sys.sleep(5)
+saveImage ( cw, file.name= file.path( current_example_dir, "repeated_gi_example_protein_complexes"), image.type='pdf')
+
+```
+
+## Figure 5d. A genetic interaction overlapping with multiple triplets. Focus on regulatory triplets. 
+```{r}
+
+regulatory_triplets_overlapping_gi  <- function( num_triplets_overlapping) {
+	list_of_gi <- count_repeated_gi_in_triplet_motifs_look_at_gi( triplet_motifs_costanzo_2016 ) %>%
+			  dplyr::filter( motif_type != "others") %>%
+			  dplyr::filter (motif_type == 'regulatory_triplets') %>%
+			  dplyr::filter ( counts == '4') %>%
+			  dplyr::filter ( (oln_id_a == 'YPL018W' & oln_id_b == 'YPL253C') | 
+			  				  (oln_id_a == 'YPL253C' & oln_id_b == 'YPL018W')  	)
+
+
+selected_regulatory_triplets <- triplet_motifs_costanzo_2016 %>%
+	dplyr::right_join ( list_of_gi) %>%
+	dplyr::filter(	( type_ac == 'tu'  & type_bc == 'tu') |
+				   	( type_ac == 'td' & type_bc == 'p') |
+				   	( type_ac == 'p' & type_bc == 'td') 
+				    )  %>%
+	dplyr::select ( one_of( c( "oln_id_a", "oln_id_b", "oln_id_c", "type_ac", "type_bc", "genetic_interaction_score" ))) %>%
+	as.data.frame()
+
+cw <- draw_triplet_motif_network  ( selected_regulatory_triplets, 'Tightly regulated proteins' ) 
+
+cw <- add_node_attributes(cw, gene_names , "oln_id")
+
+cw <- add_node_attributes ( cw, enriched_functions, "Node.label.ORF")
+
+displayGraph(cw)
+	
+triplet_motif_network_display_style(cw) 
+
+redraw (cw)
+
+current_example_dir <- file.path( networks_directory, "Repeated_GI_Example")
+
+create_directory_if_not_exists( current_example_dir) 
+
+## saveNetwork command currently not working for unknown reasons
+Sys.sleep(5)
+saveImage ( cw, file.name= file.path( current_example_dir, 
+									  paste("regulatory_", num_triplets_overlapping, "_triplets_overlapping_gi", sep="") ), 
+									  image.type='pdf' )
+
+	
+}
+
+
+# walk( 2:18, regulatory_triplets_overlapping_gi)
+
+walk( 4, regulatory_triplets_overlapping_gi)
+
+
+```
+
+
+## Figure 5e. A genetic interaction overlapping with multiple triplets. Focus on signaling triplets. 
+```{r}
+signaling_triplets_overlapping_gi  <- function( num_triplets_overlapping) {
+
+list_of_gi <- count_repeated_gi_in_triplet_motifs_look_at_gi( triplet_motifs_costanzo_2016 ) %>%
+			  dplyr::filter( motif_type != "others") %>%
+			  dplyr::filter (motif_type == 'signaling_triplets') %>%
+			  dplyr::filter ( counts == '5') %>%
+			  dplyr::filter ( (oln_id_a == 'YGR188C' & oln_id_b == 'YDL028C') | 
+			  				  (oln_id_a == 'YDL028C' & oln_id_b == 'YGR188C')  	)
+
+
+selected_regulatory_triplets <- triplet_motifs_costanzo_2016 %>%
+	dplyr::right_join ( list_of_gi) %>%
+	dplyr::filter(	( type_ac == 'ku'  & type_bc == 'ku') |
+				   	( type_ac == 'kd' & type_bc == 'p') |
+				   	( type_ac == 'p' & type_bc == 'kd') |
+				   	( type_ac == 'ku' & type_bc == 'p') |
+				   	( type_ac == 'p' & type_bc == 'ku') 
+				    )  %>%
+	dplyr::select ( one_of( c( "oln_id_a", "oln_id_b", "oln_id_c", "type_ac", "type_bc", "genetic_interaction_score" ))) %>%
+	as.data.frame()
+
+cw <- draw_triplet_motif_network  ( selected_regulatory_triplets, 'Tightly regulated proteins' ) 
+
+cw <- add_node_attributes(cw, gene_names , "oln_id")
+
+cw <- add_node_attributes ( cw, enriched_functions, "Node.label.ORF")
+
+displayGraph(cw)
+	
+triplet_motif_network_display_style(cw) 
+
+redraw (cw)
+
+current_example_dir <- file.path( networks_directory, "Repeated_GI_Example")
+
+create_directory_if_not_exists( current_example_dir) 
+
+## saveNetwork command currently not working for unknown reasons
+Sys.sleep(5)
+saveImage ( cw, file.name= file.path( current_example_dir, 
+									  paste( "signaling_", num_triplets_overlapping, "_triplets_overlapping_gi", sep="") ), 
+			image.type='pdf')
+
+}
+
+#walk( 2:16, signaling_triplets_overlapping_gi)
+
+walk( 5, signaling_triplets_overlapping_gi)
+
+
+```
+
+## Figure 7. Triplet motifs consisting of proteins that are essential, toxic upon protein overexpression and those periodically expressed in the cell cycle. 
+
+## Figure 7a. Venn Diagram
+
+```{r}
+
+results_phenotypic_annotation_enriched_motif <- sqldf( "select distinct oln_id_a, oln_id_b, oln_id_c
+	, case when essential_a = 1 and essential_b = 1 and essential_c = 1 then 1 else 0 end as essential_abc
+	, case when periodically_expressed_a = 1 and periodically_expressed_b = 1 and periodically_expressed_c = 1 then 1 else 0 end as periodically_expressed_abc
+	, case when overexpression_toxic_a = 1 and overexpression_toxic_b = 1 and overexpression_toxic_c = 1 then 1 else 0 end as overexpression_toxic_abc
+from densely_annotated_triplet_motif
+
+where ( ( type_ac = 'p' and type_bc = 'p' )
+	or  ( type_ac = 'tu' and type_bc = 'tu' ) 
+	or  ( type_ac = 'ku' and type_bc = 'ku' ) 
+	or  ( type_ac = 'p'  and type_bc = 'ku' ) 
+	or  ( type_ac = 'p'  and type_bc = 'td' ) 
+	or  ( type_ac = 'p'  and type_bc = 'kd' ) 
+	or  ( type_ac = 'ku' and type_bc = 'p'  ) 
+	or  ( type_ac = 'td' and type_bc = 'p'  ) 
+	or  ( type_ac = 'kd' and type_bc = 'p'  )
+      )  ;" ) 
+      
+      
+      
+counts_for_venn_diagram <- sqldf( "select essential_abc, periodically_expressed_abc, overexpression_toxic_abc, count(*) as counts
+from results_phenotypic_annotation_enriched_motif
+group by essential_abc, periodically_expressed_abc, overexpression_toxic_abc; "  )
+
+
+print ( counts_for_venn_diagram)
+      
 ```
 
 
 
-Network of tightly regulated proteins (involved in spindle pole formation)
+## Figure 7b. Network of tightly regulated proteins (involved in spindle pole formation)
 ```{r}
 triplet_motifs_costanzo <- sqldf( "select oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
 from densely_annotated_triplet_motif
@@ -163,7 +379,7 @@ triplet_motif_network_display_style(cw)
 
 redraw (cw)
 
-current_example_dir <- file.path( results_directory, "Achilles_heel/Spindle-pole body example")
+current_example_dir <- file.path( networks_directory, "Achilles_heel/Spindle-pole body example")
 
 create_directory_if_not_exists( current_example_dir) 
 
@@ -174,7 +390,9 @@ saveImage ( cw, file.name= file.path( current_example_dir, "spindle-pole body ex
 
 ```
 
-All three proteins in the motif needs to be essential and periodically expressed 
+
+
+## Figure 7c. Triplets in which all proteins are essential and their corresponding genes are expressed periodically in the cell cycle. 
 ```{r}
 
 triplet_motifs_costanzo <- sqldf( "select distinct oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
@@ -229,7 +447,7 @@ triplet_motif_network_display_style(cw)
 
 redraw (cw)
 
-current_example_dir <- file.path( results_directory, "Achilles_heel/Essential and periodically expressed")
+current_example_dir <- file.path( networks_directory, "Achilles_heel/Essential and periodically expressed")
 
 create_directory_if_not_exists( current_example_dir) 
 
@@ -238,7 +456,8 @@ saveImage ( cw, file.name= file.path( current_example_dir, "essential and period
 ```
 
 
-Essential and toxic upon overexpression
+
+## Figure 7d. Triplets where all proteins are essential and toxic upon overexpression. 
 ```{r}
 
 triplet_motifs_costanzo <- sqldf( "select distinct oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
@@ -291,7 +510,7 @@ triplet_motif_network_display_style(cw)
 
 redraw (cw)
 
-current_example_dir <- file.path( results_directory, "Achilles_heel/Essential and toxic upon overexpression")
+current_example_dir <- file.path( networks_directory, "Achilles_heel/Essential and toxic upon overexpression")
 
 create_directory_if_not_exists( current_example_dir) 
 
@@ -300,8 +519,7 @@ saveImage ( cw, file.name= file.path( current_example_dir, "Essential and toxic 
 ```
 
 
-
-Periodically expressed and toxic upon overexpression
+## Figure 7e. All three genes in the triplet motif are cell cycle-regulated and the corresponding protein product is toxic upon overexpression. 
 ```{r}
 
 triplet_motifs_costanzo <- sqldf( "select distinct oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, genetic_interaction_score 
@@ -355,7 +573,7 @@ triplet_motif_network_display_style(cw)
 
 redraw (cw)
 
-current_example_dir <- file.path( results_directory, "Achilles_heel/Periodically expressed and toxic upon overexpression")
+current_example_dir <- file.path( networks_directory, "Achilles_heel/Periodically expressed and toxic upon overexpression")
 
 create_directory_if_not_exists( current_example_dir) 
 

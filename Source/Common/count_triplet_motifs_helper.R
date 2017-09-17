@@ -5,60 +5,14 @@
 ### Obtain the bootstrap p-value. This script contain the helper functions for the main script 'count_triplet_motifs_negative_interactions.R'.
 
 ## Project space:
-# cd '/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/'
+# cd '/home/ignatius/PostDoc/2016/Triplet_Motifs/Source/'
 # psql sbi_triplet_motifs 
-
-#########################################################
-## Insert directed network into both directions into the edge list table, so the direction that tables join together won't affect the analyses
-
-## Inputs:
-## input_table - must have 4 columns only, which are: gene_a, gene_b, interaction type, interaction type abbreviation
-## gene_a - column name for input table that cotains gene A of the interaction
-## gene_b - column name for input table that cotains gene B of the interaction
-## interaction_type_forward - information on the type of interaction for A  ---> B 
-## interaction_type_reverse - information on the type of interaction for B <---> A
-## interaction_abbrev_forward - abbereviated information on the type of interaction for A ---> B 
-## interaction_abberv_reverse - abbereviated information on the type of interaction for B ---> A 
-## col_a - column name for gene A in the output table
-## col_b - column name for gene B in the output table
-## col_type - column name for the interaction type in the output table
-## col_abbrev - column name for the interaction type abbreviation in the output table
-
-## Output table:
-## Output table has 4 columns, denoted by col_a, col_b, col_type and col_abbrev mentioned in the inputs description above.
-collate_interactions_from_both_direction <- function (input_table, gene_a, gene_b, 
-													  interaction_type_forward, interaction_type_reverse, 
-													  interaction_abbrev_forward, interaction_abberv_reverse,
-													  col_a, col_b, col_type, col_abbrev) {
-	num_rows <- length(input_table[,1])
-	
-	new_table <- as.data.frame( matrix(ncol=4, nrow=2*num_rows))
-	
-	colnames( new_table) <- c(col_a, col_b, col_type, col_abbrev)
-	
-	new_table[1:num_rows, col_a] <- as.character(input_table[, gene_a] )
-	new_table[1:num_rows, col_b] <- as.character(input_table[, gene_b] )
-	new_table[1:num_rows, col_type] <- rep(  interaction_type_forward, num_rows)
-	new_table[1:num_rows, col_abbrev] <- rep(  interaction_abbrev_forward, num_rows)
-	
-	new_table[(num_rows+1):(2*num_rows), col_a] <- as.character(input_table[, gene_b] )
-	new_table[(num_rows+1):(2*num_rows), col_b] <- as.character(input_table[, gene_a] )
-	new_table[(num_rows+1):(2*num_rows), col_type] <- rep( interaction_type_reverse, num_rows)
-	new_table[(num_rows+1):(2*num_rows), col_abbrev] <- rep( interaction_abberv_reverse, num_rows)	
-	
-	new_table <- unique(new_table)
-	
-	new_table <- new_table[order(new_table[,col_a], new_table[,col_b]),]
-	
-	return(new_table)
-}
-
 
 #########################################################
 ## Input a network, ensure all interaction pairs are represented for both Node A -- Node B and Node B -- Node A, 
 ## ensure that the direction that table joins are done won't affect analyses
 ## The table must have 4 columns only, which are: gene_a, gene_b, interaction type, interaction type abbreviation
-### Same as above but for tbl_df objects
+### Same as above but for as_tibble objects
 ## Inputs:
 ## input_table - must have 4 columns only, which are: gene_a, gene_b, interaction type, interaction type abbreviation
 ## gene_a - column name for input table that cotains gene A of the interaction
@@ -76,31 +30,32 @@ collate_interactions_from_both_direction <- function (input_table, gene_a, gene_
 ## Output table:
 ## Output table has 4 columns, denoted by col_a, col_b, col_type and col_abbrev mentioned 
 ## in the inputs description above.
-collate_interactions_from_both_direction_tbl_df <- function (input_table, gene_a, gene_b, 
+collate_interactions_from_both_direction <- function (input_table, gene_a, gene_b, 
 															 interaction_type_forward, interaction_type_reverse, 
 															 interaction_abbrev_forward, interaction_abbrev_b,
 															 col_a, col_b, col_type, col_abbrev) {
 	
-	num_rows <- count(input_table)[[1]]
+	num_rows <- dim(input_table)[1]
 	
 	input_table <- as.data.frame(input_table)
 	
+	# print(num_rows)
 	#print ( colnames(input_table))
-	temp1 <- data.frame(rep(  interaction_type_forward, num_rows))
-	temp2 <- data.frame(rep(  interaction_abbrev_forward, num_rows))
-	
+	# temp1 <- data.frame(rep(  interaction_type_forward, num_rows))
+	# temp2 <- data.frame(rep(  interaction_abbrev_forward, num_rows))
+	# 
 	# print(head(input_table))
 	# print ( colnames(input_table) )
 	# print(gene_a)
 	# print(gene_b)
 
-	left_table  <- dplyr::tbl_df( cbind(input_table[, gene_a], 
+	left_table  <- tibble::as_tibble( cbind(input_table[, gene_a], 
 								        input_table[, gene_b] , 
 								        data.frame(rep(  interaction_type_forward, num_rows)), 
 								        data.frame(rep(  interaction_abbrev_forward, num_rows))) ) 
 	colnames(left_table ) <- c( col_a, col_b, col_type, col_abbrev)			
 	
-	right_table <- dplyr::tbl_df( cbind(input_table[, gene_b], 
+	right_table <- tibble::as_tibble( cbind(input_table[, gene_b], 
 									    input_table[, gene_a] , 
 									    data.frame(rep(  interaction_type_reverse, num_rows)), 
 									    data.frame(rep(  interaction_abbrev_b, num_rows))) ) 
@@ -212,9 +167,9 @@ form_triplet_motifs <- function (table_a, table_b, table_c, join_ac, join_bc, se
   
 	old_column_names <- colnames(table_a)
 	
-	table_a <- dplyr::tbl_df(table_a)
-	table_b <- dplyr::tbl_df(table_b)
-	table_c <- dplyr::tbl_df(table_c)
+	table_a <- tibble::as_tibble(table_a)
+	table_b <- tibble::as_tibble(table_b)
+	table_c <- tibble::as_tibble(table_c)
 	
 	temp_merged_table <- dplyr::inner_join( table_a, table_b, by= join_ac )  
 	
@@ -249,7 +204,7 @@ form_triplet_motifs <- function (table_a, table_b, table_c, join_ac, join_bc, se
 	if( my_debug == 1) { print ( paste( "count(b_gt_a) =",count(b_gt_a)[[1]]) )}
 	
 	
-	triplet_motifs <- union(a_gt_b, b_gt_a )  %>%
+	triplet_motifs <- dplyr::union(a_gt_b, b_gt_a )  %>%
 						dplyr::group_by_( .dots=lapply ( column_names[1:5], as.name) ) %>%
 						dplyr::summarise_(max_gi_score =  interp(~max(var), var = as.name(column_names[6])) )  %>%
 						dplyr::rename_(.dots=setNames(list("max_gi_score"),c(column_names[6])))  %>%
@@ -297,7 +252,7 @@ count_triplet_motifs_custom <- function (triplet_motifs, type_ac, type_bc, total
 				dplyr::rename_( .dots=setNames(list(type_ac, type_bc), c(type_bc, type_ac) ) ) %>%
 				dplyr::select( one_of( columns_to_select ))
 
-	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
 		dplyr::group_by_( .dots=lapply ( c(type_ac, type_bc), as.name) ) %>%	
 		dplyr::summarise( temp_counts=sum(counts))  %>%
 		dplyr::rename_( .dots=setNames(list("temp_counts"), c(total_count) ) ) %>%
@@ -337,7 +292,7 @@ count_triplet_motifs <- function (triplet_motifs ) {
 		dplyr::rename( type_ac= type_bc, type_bc = type_ac) %>%
 		dplyr::select( one_of( c("type_ac", "type_bc", "counts") ))
 	
-	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
 		dplyr::group_by( type_ac, type_bc) %>% 
 		dplyr::summarise(total_count=sum(counts)) %>%
 		dplyr::arrange( type_ac, type_bc)
@@ -412,7 +367,7 @@ rewire_graph <- function(edge_list_table, col_a, col_b, directed=TRUE, loops=TRU
 		new_graph <- graph_object %>%
 					 rewire(keeping_degseq(loops = loops, niter = num_iterations))
 	
-		graph_rewired_table <- dplyr::tbl_df(igraph::as_data_frame(new_graph, what="edges"))	
+		graph_rewired_table <- tibble::as_tibble(igraph::as_data_frame(new_graph, what="edges"))	
 			
 		graph_rewired_table <- dplyr::rename_(graph_rewired_table, .dots=setNames(list("from", "to"), c(col_a, col_b) )) %>% as.data.frame()
 		
@@ -449,7 +404,7 @@ rewire_graph <- function(edge_list_table, col_a, col_b, directed=TRUE, loops=TRU
 # score 
 clean_genetic_interactions_table <- function (graph_table,  col_a, col_b, score ) {
 
-	graph_table <- dplyr::tbl_df(graph_table)
+	graph_table <- tibble::as_tibble(graph_table)
 	
 	columns_selected <- c(col_a, col_b, score)
 		
@@ -471,7 +426,7 @@ clean_genetic_interactions_table <- function (graph_table,  col_a, col_b, score 
 	
 	summarise_dots <- interp(~max(var), var = as.name(score))  #  ~mean(counts) 
 	
-	regularized_table <- union( a_ge_b, b_gt_a ) # %>% 
+	regularized_table <- dplyr::union( a_ge_b, b_gt_a ) # %>% 
 	regularized_table <- dplyr::group_by_(regularized_table, .dots=lapply ( c(col_a, col_b), as.name) ) # %>%
 	regularized_table <- dplyr::summarise_(regularized_table, .dots=setNames(list(summarise_dots), c(score))  ) # %>%
 	regularized_table <- dplyr::ungroup(regularized_table)
@@ -534,23 +489,29 @@ rewire_genetic_interactions_table <- function (graph_table,  col_a, col_b, score
 # col_a, col_b
 clean_graph_table <- function (graph_table,  col_a, col_b, directed=FALSE ) {
 
-	graph_table <- dplyr::tbl_df(graph_table)
+	graph_table <- tibble::as_tibble(graph_table)
 	regularized_table <- graph_table
 	
 	if ( directed==FALSE) { 
-		a_ge_b <- dplyr::filter_(graph_table, paste( col_a, ">=", col_b) ) %>% 
-			dplyr::select( one_of( c(col_a, col_b) ))
-			
-		b_gt_a <- dplyr::filter_(graph_table, paste( col_b, ">", col_a) ) %>% 
-			dplyr::rename_( .dots=setNames(list(col_a, col_b), c(col_b, col_a) ) )  %>% 
-			dplyr::select( one_of( c(col_a, col_b) ))
 		
-		regularized_table <- union( a_ge_b, b_gt_a ) # %>% 
+		a_ge_b <- dplyr::filter_(graph_table, paste( col_a, ">=", col_b) ) %>% 
+					dplyr::select( one_of( c(col_a, col_b) ))
+			
+		
+		b_gt_a <- dplyr::filter_(graph_table, paste( col_b, ">", col_a) ) %>% 
+					dplyr::rename_( .dots=setNames(list(col_a, col_b), c(col_b, col_a) ) )  %>% 
+					dplyr::select( one_of( c(col_a, col_b) ))
+		
+		
+		regularized_table <- dplyr::union( a_ge_b, b_gt_a ) # %>% 
+		
+		
 		regularized_table <- dplyr::select(regularized_table, one_of( c(col_a, col_b) )) # %>%
-		regularized_table <- dplyr::distinct(regularized_table ) 
+		
+		regularized_table <- regularized_table %>% dplyr::distinct( ) 
 	} else {
 	
-		regularized_table <- dplyr::distinct(graph_table ) 
+		regularized_table <- graph_table %>% dplyr::distinct( ) 
 
 	}
 		
@@ -614,7 +575,7 @@ rewired_interaction_network <- function (kinase_network, sbi_interactome, tf_net
 	
 	# print( paste( "rewired_kinase_network = ", count(rewired_kinase_network ) , sep="" ) )  
 
-	rewired_kinase_network <-	collate_interactions_from_both_direction_tbl_df(  rewired_kinase_network, "kinase_oln_id", "target_oln_id", 
+	rewired_kinase_network <-	collate_interactions_from_both_direction(  rewired_kinase_network, "kinase_oln_id", "target_oln_id", 
 														  "kinase-substrate down", "kinase-substrate up",
 														  "kd", "ku", 
 														  "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev") 
@@ -632,7 +593,7 @@ rewired_interaction_network <- function (kinase_network, sbi_interactome, tf_net
 							 
 	# print( paste( "rewired_ppi_network = ", count(rewired_ppi_network ) , sep="" ) )  
 
-	rewired_ppi_network <-	collate_interactions_from_both_direction_tbl_df( rewired_ppi_network, "oln_id_a", "oln_id_b", 
+	rewired_ppi_network <-	collate_interactions_from_both_direction( rewired_ppi_network, "oln_id_a", "oln_id_b", 
 														  "protein-protein", "protein-protein",
 														  "p", "p", 
 														  "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev") 
@@ -651,7 +612,7 @@ rewired_interaction_network <- function (kinase_network, sbi_interactome, tf_net
 	# print( paste( "rewired_tf_network = ", count(rewired_tf_network ) , sep="" ) )  
 
 		
-	rewired_tf_network <-	collate_interactions_from_both_direction_tbl_df( rewired_tf_network, "regulator_oln_id", "target_oln_id", 
+	rewired_tf_network <-	collate_interactions_from_both_direction( rewired_tf_network, "regulator_oln_id", "target_oln_id", 
 														 "transcription factor-target down", "transcription factor-target up",
 														 "td", "tu", 
 														 "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev")
@@ -694,14 +655,14 @@ controllability_of_rewired_network <- function (kinase_network, sbi_interactome,
 	rewired_kinase_network <-  shuffle_table(kinase_network) %>% 
 		rewire_graph_table( "kinase_oln_id", "target_oln_id", directed=TRUE, num_iterations=num_iterations ) 
 
-	rewired_kinase_network_collated <-	collate_interactions_from_both_direction_tbl_df( rewired_kinase_network, "kinase_oln_id", "target_oln_id", 
+	rewired_kinase_network_collated <-	collate_interactions_from_both_direction( rewired_kinase_network, "kinase_oln_id", "target_oln_id", 
 														  "kinase-substrate down", "kinase-substrate up",
 														  "kd", "ku", 
 														  "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev") 
 	
 	rewired_ppi_network <- 	shuffle_table(sbi_interactome) %>% 
 		rewire_graph_table(  "oln_id_a", "oln_id_b", directed=FALSE, num_iterations=num_iterations ) %>%
-		collate_interactions_from_both_direction_tbl_df(  "oln_id_a", "oln_id_b", 
+		collate_interactions_from_both_direction(  "oln_id_a", "oln_id_b", 
 														  "protein-protein", "protein-protein",
 														  "p", "p", 
 														  "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev") 
@@ -709,7 +670,7 @@ controllability_of_rewired_network <- function (kinase_network, sbi_interactome,
 	rewired_tf_network <- shuffle_table(tf_network) %>%  
 		rewire_graph_table(  "regulator_oln_id", "target_oln_id", directed=TRUE, num_iterations=num_iterations ) 
 	
-	rewired_tf_network_collated <- collate_interactions_from_both_direction_tbl_df( rewired_tf_network, "regulator_oln_id", "target_oln_id", 
+	rewired_tf_network_collated <- collate_interactions_from_both_direction( rewired_tf_network, "regulator_oln_id", "target_oln_id", 
 														 "transcription factor-target down", "transcription factor-target up",
 														 "td", "tu", 
 														 "oln_id_a", "oln_id_b", "interaction_type", "interaction_type_abbrev")
@@ -742,12 +703,12 @@ controllability_of_rewired_network <- function (kinase_network, sbi_interactome,
 ## Shuffle the rows of the input table, without replacement.
 ## Input: A data frame table
 ## Output: 
-## Returns the shuffled table. Cast to a 'tibble' data frame using the tbl_df function. 
+## Returns the shuffled table. Cast to a 'tibble' data frame using the tibble::as_tibble function. 
 ## Please refer to the tibble and dplyr libraries for more information.
 
 shuffle_table <- function (input_table) {
 	
-	input_table <- dplyr::tbl_df(input_table)
+	input_table <- tibble::as_tibble(input_table)
 	
 	shuffled_indicies <- sample(1:count(input_table)[[1]], count(input_table)[[1]], replace = FALSE)
 	
@@ -824,8 +785,8 @@ concat_motif_counts_list_into_table <- function (list_of_randomized_triplet_moti
 
 calculate_boostrap_p_values <- function( observed_counts_table, randomized_counts_table ) {
 
-	observed_counts_table <- dplyr::tbl_df(as.data.frame( observed_counts_table) )
-	randomized_counts_table <- dplyr::tbl_df(as.data.frame ( randomized_counts_table) )
+	observed_counts_table <- tibble::as_tibble(as.data.frame( observed_counts_table) )
+	randomized_counts_table <- tibble::as_tibble(as.data.frame ( randomized_counts_table) )
 	num_randomization_trials <- nrow(randomized_counts_table)
 	
 	list_of_columns_to_test <- unique ( c(colnames( observed_counts_table), colnames(randomized_counts_table) ) )
@@ -882,8 +843,8 @@ get_full_results_table <- function (observed_counts_table, randomized_counts_tab
 	
 	randomized_counts_table[is.na(randomized_counts_table)] <- 0 
 	
-	observed_counts_table <- dplyr::tbl_df(as.data.frame( observed_counts_table) )
-	randomized_counts_table <- dplyr::tbl_df(as.data.frame ( randomized_counts_table) )
+	observed_counts_table <- tibble::as_tibble(as.data.frame( observed_counts_table) )
+	randomized_counts_table <- tibble::as_tibble(as.data.frame ( randomized_counts_table) )
 	
 	## Calculate bootstrap p-value
 	bootstrap_p_values <- calculate_boostrap_p_values( observed_counts_table, randomized_counts_table ) 
@@ -1106,7 +1067,7 @@ count_triplet_motifs_against_gene_list <- function(triplet_motifs_list, gene_lis
 		dplyr::summarise(  count_c = sum( ifelse(is.na(oln_id_c_attribute),0,1)))  %>%
 		dplyr::rename(  type_ac= type_bc, type_bc = type_ac) 
 	
-	count_genes_in_motifs_protein_c <- union( a_ge_b, b_gt_a)  %>%
+	count_genes_in_motifs_protein_c <- dplyr::union( a_ge_b, b_gt_a)  %>%
 		dplyr::group_by( type_ac, type_bc) %>% 
 		dplyr::summarise(count_c=sum(count_c)) %>%
 		dplyr::arrange( type_ac, type_bc)
@@ -1124,7 +1085,7 @@ count_triplet_motifs_against_gene_list <- function(triplet_motifs_list, gene_lis
 		dplyr::summarise( count_a_and_b=sum(ifelse(is.na(oln_id_a_attribute) & is.na(oln_id_b_attribute),0,1)) )  %>%
 		dplyr::rename(  type_ac= type_bc, type_bc = type_ac) 
 	
-	count_genes_in_motifs_protein_a_and_b <- union( a_ge_b_AB, b_gt_a_AB)  %>%
+	count_genes_in_motifs_protein_a_and_b <- dplyr::union( a_ge_b_AB, b_gt_a_AB)  %>%
 		dplyr::group_by( type_ac, type_bc) %>% 
 		dplyr::summarise( count_a_and_b=sum(count_a_and_b) ) %>%
 		dplyr::arrange( type_ac, type_bc)
@@ -1201,7 +1162,7 @@ count_triplet_motifs_gi_against_edge_list_helper <- function (triplet_motifs_lis
 	edge_list_updated <- cbind ( edge_list, edge_attribute=rep ( 1, length(edge_list[,1])) )
 	
 	triplet_motif_and_edge_lists <- dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_a", "oln_id_b" = "oln_id_b") ) %>%
-		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a") ) ) %>%
+		dplyr::union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a") ) ) %>%
 		dplyr::distinct()
 	
 	a_ge_b <- dplyr::filter( triplet_motif_and_edge_lists, oln_id_a >= oln_id_b ) %>%
@@ -1211,7 +1172,7 @@ count_triplet_motifs_gi_against_edge_list_helper <- function (triplet_motifs_lis
 		dplyr::distinct( oln_id_a, oln_id_b, type_ac, type_bc,  edge_attribute) %>%
 		dplyr::rename(  oln_id_a= oln_id_b, oln_id_b = oln_id_a ) 
 	
-	edges_in_motifs <- union( a_ge_b, b_gt_a)  
+	edges_in_motifs <- dplyr::union( a_ge_b, b_gt_a)  
 	
 	return( edges_in_motifs)	
 }
@@ -1245,7 +1206,7 @@ count_triplet_motifs_gi_against_edge_list <- function (triplet_motifs_list, edge
 	edge_list_updated <- cbind ( edge_list, edge_attribute=rep ( 1, length(edge_list[,1])) )
 	
 	triplet_motif_and_edge_lists <- dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_a", "oln_id_b" = "oln_id_b") ) %>%
-		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a") ) ) %>%
+		dplyr::union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a") ) ) %>%
 		dplyr::distinct()
 
 	a_ge_b <- dplyr::filter( triplet_motif_and_edge_lists, type_ac >= type_bc ) %>%
@@ -1259,7 +1220,7 @@ count_triplet_motifs_gi_against_edge_list <- function (triplet_motifs_list, edge
 		dplyr::summarise( count_edge_attribute=sum(ifelse(is.na(edge_attribute), 0, 1)) ) %>%
 		dplyr::rename(  type_ac= type_bc, type_bc = type_ac ) 
 	
-	count_edges_in_motifs <- union( a_ge_b, b_gt_a)  %>%
+	count_edges_in_motifs <- dplyr::union( a_ge_b, b_gt_a)  %>%
 		dplyr::group_by( type_ac, type_bc) %>% 
 		dplyr::summarise(count_edge_attribute=sum(count_edge_attribute) ) %>%
 		dplyr::arrange( type_ac, type_bc)
@@ -1294,9 +1255,9 @@ count_triplet_motifs_non_gi_edges_against_edge_list <- function (triplet_motifs_
 	edge_list_updated <- cbind ( edge_list, edge_attribute=rep ( 1, length(edge_list[,1])) )
 	
 	triplet_motif_and_edge_lists <- dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_a", "oln_id_c" = "oln_id_b") ) %>%
-		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_c" = "oln_id_a") ) ) %>%
-		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_b" = "oln_id_a", "oln_id_c" = "oln_id_b") ) ) %>%
-		union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_b" = "oln_id_b", "oln_id_c" = "oln_id_a") ) ) %>%
+		dplyr::union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_a" = "oln_id_b", "oln_id_c" = "oln_id_a") ) ) %>%
+		dplyr::union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_b" = "oln_id_a", "oln_id_c" = "oln_id_b") ) ) %>%
+		dplyr::union ( dplyr::left_join( triplet_motifs_list, edge_list_updated, by=c("oln_id_b" = "oln_id_b", "oln_id_c" = "oln_id_a") ) ) %>%
 		dplyr::distinct()
 	
 	## count_a_and_b: If the attribute is found in either gene A or gene B of the triplet motif, I will count this as 1
@@ -1313,7 +1274,7 @@ count_triplet_motifs_non_gi_edges_against_edge_list <- function (triplet_motifs_
 		dplyr::summarise( count_edge_attribute=sum(ifelse(is.na(edge_attribute), 0,1 )) )  %>%
 		dplyr::rename(  type_ac= type_bc, type_bc = type_ac) 
 	
-	count_edges_in_motifs <- union( a_ge_b, b_gt_a)  %>%
+	count_edges_in_motifs <- dplyr::union( a_ge_b, b_gt_a)  %>%
 		dplyr::group_by( type_ac, type_bc) %>% 
 		dplyr::summarise(count_edge_attribute=sum(count_edge_attribute) ) %>%
 		dplyr::arrange( type_ac, type_bc)
@@ -1359,7 +1320,7 @@ count_triplet_motifs_unique_gi_pairs <- function (triplet_motifs ) {
 		dplyr::rename(  type_ac= type_bc, type_bc = type_ac) %>%
 		dplyr::select( one_of( c("type_ac", "type_bc", "counts") ))
 	
-	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
 		dplyr::group_by( type_ac, type_bc) %>% 
 		dplyr::summarise(total_count=sum(counts)) %>%
 		dplyr::arrange( type_ac, type_bc)
@@ -1408,7 +1369,7 @@ count_repeated_gi_in_triplet_motifs_summary <- function (triplet_motifs ) {
 		dplyr::summarise( counts=n()) %>%
 		dplyr::filter( counts > 1)
 
-	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
 		dplyr::group_by( motif_type, oln_id_a, oln_id_b) %>% 
 		dplyr::summarise( total_count=sum(counts)) %>%
 		dplyr::group_by( motif_type) %>% 
@@ -1425,7 +1386,6 @@ count_repeated_gi_in_triplet_motifs_detailed <- function (triplet_motifs ) {
 		dplyr::group_by ( type_ac, type_bc, oln_id_a, oln_id_b )  %>%
 		dplyr::summarise(counts_level=n()) %>%
 		dplyr::filter( counts_level > 1) %>%
-		
 		dplyr::group_by( type_ac, type_bc) %>%
 		dplyr::summarise(counts=n()) %>%
 		dplyr::ungroup() %>%
@@ -1443,7 +1403,7 @@ count_repeated_gi_in_triplet_motifs_detailed <- function (triplet_motifs ) {
 		dplyr::mutate( motif_type = as.character( map2(type_ac, type_bc, paste0)  ) ) %>%
 		dplyr::select( one_of( c("motif_type", "counts") ))
 	
-	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
+	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a)  %>%
 		dplyr::group_by( motif_type) %>% 
 		dplyr::summarise(total_count=sum(counts)) %>%
 		dplyr::arrange( motif_type)
@@ -1452,129 +1412,63 @@ count_repeated_gi_in_triplet_motifs_detailed <- function (triplet_motifs ) {
 }
 
 
-
+# Count the number of genetic interactions associated with different types of triplets.
+# Enable counts to be used for analysis of frequency distributions and box-plots
 count_repeated_gi_in_triplet_motifs_distribution <- function (triplet_motifs ) {
 	
 	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
-		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
-		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
-		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
-		dplyr::summarise( counts=n()) 
-	
+				dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
+				dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
+				dplyr::distinct() 
 	
 	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
-		dplyr::rename( type_ac= type_bc, type_bc = type_ac) %>%
-		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
-		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
-		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
-		dplyr::summarise( counts=n()) 
+				dplyr::rename( type_ac= type_bc, type_bc = type_ac) %>%
+				dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
+				dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
+				dplyr::distinct() 
 	
-	
-	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
-		dplyr::group_by( motif_type, oln_id_a, oln_id_b) %>%
-		dplyr::summarise( counts=sum(counts) ) %>%
-		dplyr::filter(counts >1 ) %>%
-		dplyr::group_by( motif_type, counts) %>%
-		dplyr::summarise( total_count=n() ) %>%
-		dplyr::arrange(motif_type)
-	
+	triplet_motif_counts <- dplyr::union( a_ge_b, b_gt_a) %>%
+				dplyr::distinct() %>% 
+				dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
+				dplyr::summarise( counts=n())  %>%
+				dplyr::filter(counts >1 ) %>%
+				dplyr::group_by( motif_type, counts) %>%
+				dplyr::summarise( total_count=n() ) %>%
+				dplyr::arrange(motif_type)
+			
 	return( triplet_motif_counts) 
 	
 }
 
-
-# Group different triplet motifs together 
-group_triplet_motifs_by_type_directed <- function ( motif_type) {
-	
-	if ( motif_type %in% c( "kuku",  'pku' )) {
-		return ( 'signaling_triplets_up')
-	} else if ( motif_type %in% c( 'pkd' )) {
-		return ( 'signaling_triplets_down')
-	} else if ( motif_type %in% c( "tutu" )) {
-		return ( 'regulatory_triplets_up')
-	} else if ( motif_type %in% c( "tdp" )) {
-		return ( 'regulatory_triplets_down')
-	} else if ( motif_type %in% c( "pp" )) {
-		return ( 'protein_complexes')
-	} else {
-		return ( 'others')
-	}
-	
-}
-
-
-count_repeated_gi_in_triplet_motifs_distribution_in_out <- function (triplet_motifs ) {
+## Used for counting the number of genetic interactions associated with different types of triplets.
+## Use this function after looking at the frequency distribution to get a more in-depth look at the triplets. 
+## Gives the number of each type of triplets associated with each genetic interaction pair. 
+count_repeated_gi_in_triplet_motifs_look_at_gi <- function (triplet_motifs ) {
 	
 	a_ge_b <- dplyr::filter( triplet_motifs, type_ac >= type_bc ) %>%
-		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type_directed  ) ) %>%
+		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
 		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
-		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
-		dplyr::summarise( counts=n()) 
-	
+		dplyr::distinct() 
 	
 	b_gt_a <- dplyr::filter( triplet_motifs, type_bc > type_ac ) %>%
 		dplyr::rename( type_ac= type_bc, type_bc = type_ac) %>%
-		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type_directed  ) ) %>%
+		dplyr::mutate( motif_type = map_chr( map2(type_ac, type_bc, paste0), group_triplet_motifs_by_type  ) ) %>%
 		dplyr::select( one_of( c("motif_type", "oln_id_a", "oln_id_b", "oln_id_c") )) %>%
+		dplyr::distinct() 
+
+
+	
+	gi_with_multiple_triplets <- rbind( a_ge_b, b_gt_a) %>%
+		as.data.frame() %>%
+		distinct() %>%
 		dplyr::group_by( motif_type, oln_id_a, oln_id_b )  %>%
-		dplyr::summarise( counts=n()) 
-	
+		dplyr::summarise( counts=n())  %>%
+		 dplyr::filter(counts >1 )
 
-# 
-# 	b_gt_a <- dplyr::mutate(b_gt_a, protein_complexes = 0, regulatory_triplets_up =0)
-# 	
-# 	
-# 	a_ge_b[is.na(a_ge_b)] <- 0
-# 	
-# 	b_gt_a[is.na(b_gt_a)] <- 0
-
-	# print( head( a_ge_b) )
-	# 
-	# print(head(b_gt_a))
-
-	
-	triplet_motif_counts <- union( a_ge_b, b_gt_a)  %>%
-		dplyr::group_by( motif_type, oln_id_a, oln_id_b) %>%
-		dplyr::summarise( counts=sum(counts) ) %>%
-		tidyr::spread( motif_type, counts)
-	
-	triplet_motif_counts[is.na(triplet_motif_counts)] <- 0
-
-		# dplyr::summarise( signaling_triplets_up=sum(signaling_triplets_up),
-		# 				  signaling_triplets_down=sum(signaling_triplets_down),
-		# 				  regulatory_triplets_up=sum(regulatory_triplets_up),
-		# 				  regulatory_triplets_down=sum(regulatory_triplets_down),
-		# 				  protein_complexes=sum(protein_complexes),
-		# 				  others=sum(others) )
-	
-	triplet_motif_counts_signaling <- triplet_motif_counts %>%
-		dplyr::select( one_of( c( "oln_id_a",
-								  "oln_id_b",
-								  "signaling_triplets_up",
-								  "signaling_triplets_down") )) %>%
-		dplyr::group_by( signaling_triplets_up, signaling_triplets_down) %>%
-		dplyr::summarise(counts=n() )
-
-
-	triplet_motif_counts_regulatory <- triplet_motif_counts %>%
-		dplyr::select( one_of( c( "oln_id_a",
-								  "oln_id_b",
-								  "regulatory_triplets_up",
-								  "regulatory_triplets_down") )) %>%
-		dplyr::group_by( regulatory_triplets_up, regulatory_triplets_down) %>%
-		dplyr::summarise(counts=n() ) 
-
-	# ggplot ( observed_counts_distribution_repeated_gi_pairs, aes ( num_motifs_shared, counts) ) +
-	# 	geom_line() + 
-	# 	scale_y_log10() +
-	# 	facet_grid( .~  motif_type, scales="free_x") 
-	# 
-	
-	# return(a_ge_b )
-	
-	return( list( signaling=triplet_motif_counts_signaling, regulatory=triplet_motif_counts_regulatory)) 
+	return( gi_with_multiple_triplets)
 	
 }
+
 
 
 # Transpose the results from the 'count_overlapping_triplet_motifs' function

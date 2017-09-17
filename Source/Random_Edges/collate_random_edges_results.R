@@ -8,8 +8,11 @@ options <- commandArgs(trailingOnly = TRUE)
 source( "./Common/parameters_file.R")
 
 
+# figure_file_suffix <- ".tiff"
+figure_file_suffix <- ".pdf"
+
 source( file.path ( source_directory, 'Random_Edges/collate_random_edges_results_helper.R')) 
-source( file.path( source_directory, 'Figures/reshape_triplet_motifs_helper.R') )
+source( file.path( source_directory, 'Figures/paper_figures_helper.R') )
 
 ### Directories
 results_directory <- file.path ( results_directory, "Bootstrap_p_values/Random_Edges" ) 
@@ -31,7 +34,7 @@ JOB_NUMBERS <- 0:239  ## Need to be upldated once the corrected results has been
 adjust_job_number <- 1 ## Add this number to the job number to access the correct position in the  PARAMS array
 
 ## Use purple background and create a subset of the triplet motifs for the poster
-print_poster_results_purple_background <- TRUE
+print_poster_results_purple_background <- FALSE
 
 plot_background_colour <- "white"  
 axis_text_colour       <- "black" 
@@ -52,7 +55,6 @@ for( PERCENTAGE in PERCENTAGE_OF_ORIGINAL_NETWORK ) {
 		PARAMS <- c( PARAMS, PERCENTAGE) 
 	}
 }
-
 
 # random_edges_after_randomization_counts_0.2_1_1_1_.tab
 # random_edges_before_randomization_counts_0.2_1_1_1_.tab
@@ -92,7 +94,6 @@ randomization_collated_counts <- rbind( before_randomization_collated_counts, af
 
 randomization_collated_counts[, 'motif_type'] <- convert_triplet_motifs_name_to_paper_style( randomization_collated_counts[, 'motif_type'])
 
-write.table ( randomization_collated_counts, file=file.path ( final_results_directory, "randomization_collated_counts.txt"))
 
 
 #####################################################################################################################################
@@ -114,15 +115,14 @@ write.table ( stat_test_result_random_edges, file=file.path ( final_results_dire
 #####################################################################################################################################
 
 # The motif types sorted by largest to lowest count
-motif_types_sorted_by_counts_desc <- filter ( randomization_collated_counts, parameter==1 & experiment=='Before' & motif_type != 'total' ) %>%
-									select( one_of(c('experiment', 'motif_type', 'counts'))) %>% 
-									arrange(desc(counts)) %>%
-									distinct() %>% 
-										select (one_of(c('motif_type'))) %>% 
-										as.data.frame() %>%
-										t() %>%
-										as.vector()
-
+motif_types_sorted_by_counts_desc <- dplyr::filter ( randomization_collated_counts, parameter==1 & experiment=='Before' & motif_type != 'total' ) %>%
+									 dplyr::select( one_of(c('experiment', 'motif_type', 'counts'))) %>% 
+									 dplyr::arrange(desc(counts)) %>%
+									 dplyr::distinct() %>% 
+									 dplyr::select (one_of(c('motif_type'))) %>% 
+									 as.data.frame() %>%
+									 t() %>%
+									 as.vector()
 
 ## Temporary code to filter data for Poster
 if ( print_poster_results_purple_background == TRUE) {
@@ -136,53 +136,19 @@ if ( print_poster_results_purple_background == TRUE) {
 }
 
 ### Get statistical significance of results
-temp <- dplyr::select(stat_test_result_random_edges, one_of(c('parameter', 'motif_type', 'is_significant')))
-temp$experiment <-1
-temp$counts <-1
-temp[, 'is_significant'] <- as.factor(temp[, 'is_significant'] )
+background_shading_table <- dplyr::select(stat_test_result_random_edges, one_of(c('parameter', 'motif_type', 'is_significant')))
+background_shading_table$experiment <-1
+background_shading_table$counts <-1
+background_shading_table[, 'is_significant'] <- as.factor(background_shading_table[, 'is_significant'] )
 
 ## Change the order in which the motif types are ordered when they appear as rows in the facet grid
-temp[, 'motif_type'] <- factor (  temp[, 'motif_type'], levels = motif_types_sorted_by_counts_desc ) 
+background_shading_table[, 'motif_type'] <- factor (  background_shading_table[, 'motif_type'], levels = motif_types_sorted_by_counts_desc ) 
 randomization_collated_counts[, 'motif_type'] <- factor ( randomization_collated_counts[,'motif_type'], levels = motif_types_sorted_by_counts_desc ) 
-
-# removal or addition of nodes to network
-randomization_collated_counts %>%
-	dplyr::filter (  motif_type != 'total' ) %>%
-	ggplot (  aes( experiment, counts) ) +
-	geom_boxplot()  +
-	geom_rect(data = temp ,aes(  fill=is_significant ),
-			  xmin = -Inf,xmax = Inf,
-			  ymin = -Inf,ymax = Inf,alpha = 0.3) +
-	scale_fill_manual( values=c('blue', 'red')) +
-	facet_grid(   motif_type ~ parameter , scales="free") + 
-	labs( title = "Removal or Addition of Edges to Network") +
-	xlab( "Before or After Network Randomization") +
-	ylab ('Counts') +
-	theme( plot.background = element_rect(fill = plot_background_colour, color=plot_background_colour), 
-		   axis.text = element_text(colour = axis_text_colour),
-		   axis.title = element_text(colour = axis_text_colour),
-			strip.text.y = element_text(face = "italic"),
-			  plot.title = element_text(hjust = 0.5, size = rel(1), colour = axis_text_colour),
-			  	legend.position="none")
-
-
-if ( print_poster_results_purple_background == FALSE) {
-	
-ggsave(file.path(final_results_directory, "randomization_collated_results.tiff"), plot=last_plot(), width=graphic_width, height=graphic_height )
-
-ggsave(file.path(final_results_directory, "randomization_collated_results_15x15.tiff"), plot=last_plot(), width=15, height=15 )
-
-}
-
-if ( print_poster_results_purple_background == TRUE) {
-	
-	final_results_directory <-	"/media/z3371724/PostDoc/2016/Triplet_Motifs/Results/Poster/Figures_Purple_Background/"
-	
-	ggsave(file.path(final_results_directory, "randomization_collated_results.tiff"), plot=last_plot(), width=10, height=5 )
-
-}
 
 
 #####################################################################################################################################
 
+write.table ( randomization_collated_counts, file=file.path ( final_results_directory, "randomization_collated_counts.txt"))
+
+#####################################################################################################################################
 

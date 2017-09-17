@@ -17,13 +17,13 @@ get_list_of_files <- function(results_directory, file_pattern  )  {
 	
 	for ( i in list_of_job_folders) {
 		
-		temp_file_list <- list.files(path = paste( results_directory, i, sep="") )
+		temp_file_list <- list.files(path = file.path( results_directory, i) )
 		
 		for ( j in temp_file_list ) {
 			
 			if (grepl(file_pattern, j) ) {
 				
-				one_file             <- paste ( results_directory, i, "/", j , sep="")
+				one_file             <- file.path ( results_directory, i, "/", j )
 				
 				list_of_result_files <- c(list_of_result_files, one_file)  
 			}
@@ -197,7 +197,7 @@ collate_result_files_helper <- function ( raw_results_directory, triplet_motifs_
 										  triplet_motifs_file_pattern, observed_file_pattern, final_results_directory_pattern, 
 										  number_of_randomized_samples = 2000 , p_values = 0.05) { 
 	
-	count_triplet_motifs_observed 	<- read.table ( paste( raw_results_directory, observed_file_pattern, sep=""), 
+	count_triplet_motifs_observed 	<- read.table ( file.path( raw_results_directory, observed_file_pattern ), 
 													header=TRUE )
 	
 	count_triplet_motifs_randomized <- collate_randomization_result_files_into_one_table( raw_results_directory, 
@@ -208,8 +208,8 @@ collate_result_files_helper <- function ( raw_results_directory, triplet_motifs_
 	final_results_table_count_triplet_motifs <- get_full_results_table(count_triplet_motifs_observed, count_triplet_motifs_randomized, 
 																	   p.value=p_values) 
 
-	write.table ( count_triplet_motifs_randomized, file=paste( final_results_directory, count_triplet_motifs_randomized_file , sep=""))
-	write.table (final_results_table_count_triplet_motifs, file=paste( final_results_directory, triplet_motifs_full_results_file, sep="") )
+	write.table ( count_triplet_motifs_randomized, file=file.path( final_results_directory, count_triplet_motifs_randomized_file ))
+	write.table (final_results_table_count_triplet_motifs, file=file.path( final_results_directory, triplet_motifs_full_results_file ) )
 	
 	return( final_results_table_count_triplet_motifs)
 }

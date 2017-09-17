@@ -26,7 +26,7 @@ collate_different_datasets <- function( results_directory, list_of_file_names, s
 			expt_number_counter <- 0
 		}
 		
-		one_data_table <- read.table ( paste( results_directory, current_file_name, sep=""), header=TRUE)
+		one_data_table <- read.table ( file.path( results_directory, current_file_name), header=TRUE)
 		
 		motif_types <- colnames( one_data_table)
 		
@@ -49,8 +49,10 @@ collate_different_datasets <- function( results_directory, list_of_file_names, s
 		
 		columns_to_get <- which ( colnames(one_data_table ) %in%  c( motif_types, 'total'))
 		
+		# print(columns_to_get )
+		
 		one_data_table_gathered <- tidyr::gather ( one_data_table, 'motif_type', 'counts',
-												   columns_to_get)
+												   names( one_data_table)[columns_to_get])
 		
 		
 		parameter_column_data <- rep( parameter_to_capture, length ( one_data_table_gathered[,1]) ) 
@@ -108,9 +110,13 @@ random_edges_statstical_testing <- function( randomization_collated_counts,
 		filter_condition_total_before <- interp( quote ( parameter==x &  experiment==y & motif_type=='total'), 
 												 x=param, y= experiment_label_observed ) 
 		
-		total_before <- dplyr::filter( randomization_collated_counts, filter_condition_total_before  )	%>%
+		#print ( filter_condition_total_before)
+		
+		total_before <- dplyr::filter_( randomization_collated_counts, filter_condition_total_before  )	%>%
 			dplyr::select(one_of ( c('expt_number', 'counts')))  %>%
 			dplyr::rename( total_counts = counts)
+		
+		#print ("blah")
 		
 		# print ( paste ( "dim(total_before) =", dim(total_before)))
 		# print ( length(unique( total_before[,'expt_number'])) )
@@ -125,7 +131,7 @@ random_edges_statstical_testing <- function( randomization_collated_counts,
 			filter_condition_before <- interp( quote ( parameter==x & motif_type==y & experiment==z), 
 											   x=param, y=motif_type, z=experiment_label_observed) 
 			
-			before_table <- dplyr::filter( randomization_collated_counts, filter_condition_before  )
+			before_table <- dplyr::filter_( randomization_collated_counts, filter_condition_before  )
 			
 			# print ( paste( "dim(before_table) =", dim(before_table)) ) 
 			
@@ -168,7 +174,7 @@ random_edges_statstical_testing <- function( randomization_collated_counts,
 			filter_condition_after <- interp( quote ( parameter==x & motif_type==y & experiment==z), 
 											  x=param, y=motif_type, z=experiment_label_random) 
 			
-			after  <- dplyr::filter( randomization_collated_counts, filter_condition_after )	%>%
+			after  <- dplyr::filter_( randomization_collated_counts, filter_condition_after )	%>%
 				dplyr::select(one_of ( c('counts'))) %>% 
 				t() %>%
 				as.vector()
