@@ -90,7 +90,7 @@ boolean_to_colour <- function ( x) {
 }
 
 
-# Function: print_box_plot_observed_vs_random
+# Function: print_box_plot_observed_vs_random_helper
 # Description:
 # 	Compare observed and random values using box plot.
 # 	Significant observed data is shown as a red dot, Insignificant observed data is shown as a blue dot.
@@ -109,8 +109,11 @@ boolean_to_colour <- function ( x) {
 #   false_positive_counts_threshold: if the observed count is lower than a proportion of the total observed counts, then it is considered a false positive
 #   p_value_threshold: p-value below which the item is considered to be statistically significant
 #   p_value_column: which column from the p_values_data column to obtain the p-value, default value = "enrichment_adj_p_values"
-
-print_box_plot_observed_vs_random <- function (observed_data, random_data, p_values_data, motifs_to_include = NULL, ordering=NULL, plot_type="boxplot", 
+## Return:
+# The tidied up observed_data
+# The tidied up random_data
+# A list called is_significant, showing which motif is significant
+print_box_plot_observed_vs_random_helper <- function (observed_data, random_data, p_values_data, motifs_to_include = NULL, ordering=NULL, plot_type="boxplot", 
 											   background_colour="white", axis_text_colour="black", false_positive_counts_threshold = 0.02, p_value_threshold=0.05,
 											   p_value_column="enrichment_adj_p_values") {
 	
@@ -139,7 +142,7 @@ print_box_plot_observed_vs_random <- function (observed_data, random_data, p_val
 		colnames(observed_data ) <- c(current_observed_data_colnames, motif_types_to_be_added) 
 	}
 	
-	## Fix missing motif types in observed data, according the ordering requested
+	## Fix missing motif types in observed data, according to the ordering requested
 	if ( !is.null(ordering) & is.vector(ordering) ) { 
 		motif_types_to_be_added <- setdiff ( ordering,   
 											 unique(colnames( observed_data) )  )
@@ -204,12 +207,56 @@ print_box_plot_observed_vs_random <- function (observed_data, random_data, p_val
 	is_significant <- (observed_data[, "value"] > sum ( observed_data[, "value"] ) * false_positive_counts_threshold)  &
 							(p_values_data[, p_value_column]  < p_value_threshold)
 	
+	names(is_significant) <-  p_values_data[,"motif_type"]
+	
+	return( list (  observed_data=observed_data,  
+					random_data=random_data, 
+					is_significant=is_significant  ))
+}
+
+
+# Function: print_box_plot_observed_vs_random
+# Description:
+# 	Compare observed and random values using box plot.
+# 	Significant observed data is shown as a red dot, Insignificant observed data is shown as a blue dot.
+# 	Frequency distribution of many randomized datasets is shown as a box plot.
+# 	Y-axis represents the frequency counts, 
+#   X-axis represents eah type of triplet motif. 
+# Input values:
+#   observed_data: Data table of the observed values. Each column is one type of motif. Should only be one row representing observed value
+#   random_data: Data table of the values from randomization runs. Each column is one type of motif. Each row represents the values from one randomized network.
+#   p_values_data: Full results data table containing the observed and randomized results. Must contain column 'motif_type' and 'enrichment_adj_p_values' 
+#   motifs_to_include: An array listing the types of triplet motifs to include in the plot.
+#   ordering: If order is null, then sort by decreasing order of the observed frequency. Otherwise, rank the motif types from left to right by the ordered specified.
+#   plot_type: 'boxplot' for Box-and-whisters plot, 'violin' for violin plot
+#   background_colour: Backgound color of the plot
+#   axis_text_colour: Colour of the text for the axis labels
+#   false_positive_counts_threshold: if the observed count is lower than a proportion of the total observed counts, then it is considered a false positive
+#   p_value_threshold: p-value below which the item is considered to be statistically significant
+#   p_value_column: which column from the p_values_data column to obtain the p-value, default value = "enrichment_adj_p_values"
+
+print_box_plot_observed_vs_random <- function (observed_data, random_data, p_values_data, motifs_to_include = NULL, ordering=NULL, plot_type="boxplot", 
+											   background_colour="white", axis_text_colour="black", false_positive_counts_threshold = 0.02, p_value_threshold=0.05,
+											   p_value_column="enrichment_adj_p_values") {
+	
+	
+	tidy_data <- print_box_plot_observed_vs_random_helper(observed_data, random_data, p_values_data, motifs_to_include, 
+														  ordering, plot_type, 
+														  background_colour, axis_text_colour, 
+														  false_positive_counts_threshold , p_value_threshold,
+														  p_value_column) 
+	
+	is_significant <- tidy_data[["is_significant"]]
+	observed_data <- tidy_data[["observed_data"]]
+	random_data <- tidy_data[["random_data"]]
+	
+	
 	significance_color <- sapply ( is_significant, function(x) {  return(boolean_to_colour(x)) } )
 	
 	## Plot the plot
-	
+	return_plot <- NULL 
 	if ( plot_type == "violin" ) {
-	ggplot(random_data, aes(key, value)) + 
+		return_plot <- ggplot(random_data, aes(key, value)) + 
 		geom_violin() + 
 		geom_point( data=observed_data, aes(x=key, y=value  )   ## Add the observed values as additional points
 					, color=significance_color, size=4 , alpha=0.5) 	+
@@ -217,7 +264,7 @@ print_box_plot_observed_vs_random <- function (observed_data, random_data, p_val
 		ylab( "Counts")  
 	} else {
 		
-		ggplot(random_data, aes(key, value)) + 
+		return_plot <- ggplot(random_data, aes(key, value)) + 
 			geom_boxplot() + 
 			geom_point( data=observed_data, aes(x=key, y=value  )   ## Add the observed values as additional points
 						, color=significance_color, size=4 , alpha=0.5) 	+
@@ -228,6 +275,9 @@ print_box_plot_observed_vs_random <- function (observed_data, random_data, p_val
 				   axis.title = element_text(colour = axis_text_colour),
 				   axis.text.x=element_text(face="italic"))
 	}
+	
+	
+	return(return_plot )
 }
 
 #####################################################################
@@ -445,18 +495,16 @@ convert_edge_type_name_to_paper_style <- function ( edge_type_names_array) {
 	
 	edge_type_names_array <- as.vector ( edge_type_names_array)
 	
-	all_edge_types <- c('p', 'tu', 'td', 'ku', 'kd', 'na')
+	all_edge_types <- c('p', 'tu', 'td', 'ku', 'kd', 'na', NA)
 	
-	all_edge_types_paper_style <- c('P', 'T1', 'T2', "K1", "K2", 'None')
+	all_edge_types_paper_style <- c('P', 'T1', 'T2', "K1", "K2", 'None', "None")
 	
 	hash <- create_id_to_attribute_hash(  all_edge_types, 
 										  all_edge_types_paper_style) 
 	
-	
 	updated_names <- convert_keys_to_multiple_attributes(edge_type_names_array, hash, ifnotfound=NA) 
 	
 	updated_names <- unlist (updated_names)
-	
 	
 	if ( length( which ( is.na(updated_names ))) > 0 ) {
 		
@@ -476,5 +524,255 @@ convert_edge_type_name_to_paper_style <- function ( edge_type_names_array) {
 
 
 #####################################################################
+
+# based on print_box_plot_observed_vs_random
+
+clean_data_for_more_stringent <- function (observed_data, random_data, p_values_data, motifs_to_include = NULL, ordering=NULL, plot_type="boxplot", 
+										   background_colour="white", axis_text_colour="black", false_positive_counts_threshold = 0.02, p_value_threshold=0.05,
+										   p_value_column="enrichment_adj_p_values") {
+
+		## Clean motif names
+		motifs_to_include <- convert_triplet_motifs_name_to_paper_style( motifs_to_include ) 
+		
+		colnames( observed_data) <- convert_triplet_motifs_name_to_paper_style( colnames( observed_data) ) 
+		
+		colnames( random_data) <- convert_triplet_motifs_name_to_paper_style( colnames( random_data) ) 
+		
+		p_values_data[,"motif_type"] <- convert_triplet_motifs_name_to_paper_style( p_values_data[,"motif_type"] )
+		
+		
+		## Fix missing motif types, add what is missing in the observed data
+		motif_types_to_be_added <- setdiff ( unique(colnames( random_data)   ),   
+											 unique(colnames( observed_data) )  )
+		
+		if (length(motif_types_to_be_added) > 0 ) { 
+			
+			current_observed_data_colnames <- colnames( observed_data) 
+			
+			for ( i in 1:length(motif_types_to_be_added) ) { 
+				observed_data <- cbind ( observed_data, c(0) )
+			}
+			
+			colnames(observed_data ) <- c(current_observed_data_colnames, motif_types_to_be_added) 
+		}
+		
+		## Fix missing motif types in observed data, according to the ordering requested
+		if ( !is.null(ordering) & is.vector(ordering) ) { 
+			motif_types_to_be_added <- setdiff ( ordering,   
+												 unique(colnames( observed_data) )  )
+			
+			
+			if (length(motif_types_to_be_added) > 0 ) { 
+				
+				current_observed_data_colnames <- colnames( observed_data) 
+				
+				for ( i in 1:length(motif_types_to_be_added) ) { 
+					observed_data <- cbind ( observed_data, c(0) )
+				}
+				
+				colnames(observed_data ) <- c(current_observed_data_colnames, motif_types_to_be_added) 
+			}
+		}
+		
+		## Fix missing motif types, add what is missing in the random data
+		motif_types_to_be_added <- setdiff ( unique(colnames( observed_data) ),   
+											 unique(colnames( random_data)   ) )
+		
+		if (length(motif_types_to_be_added) > 0 ) { 
+			current_randomized_data_colnames <- colnames( random_data) 
+			
+			for ( i in 1:length(motif_types_to_be_added) ) { 
+				random_data <- cbind ( random_data, rep(0, length( random_data[,1])) )
+			}
+			
+			colnames(random_data ) <- c(current_randomized_data_colnames, motif_types_to_be_added) 
+		}
+		
+		
+		## Unpivot the data
+		random_data <- gather( random_data)
+		observed_data <- gather( observed_data)
+
+	
+		return ( list( random_data = random_data, observed_data = observed_data))
+}
+
+
+############################
+
+
+
+##########################################################
+
+
+
+## Function: tidy_up_list_of_input_files
+
+## Description: I use this to combine several plots together using faceting 
+## Before I do this, I need to use this helper function to read the tables, and tidy up the significance value (e.g. apply 2% cutoff)
+## Ideally use with map function to process lists of files. 
+## Inputs:
+# 
+#  negative_interactions_full_file:     one pvalues_results_file
+#  negative_interactions_random_file:	one	random_results_file
+#  negative_interactions_observed_file:	one observed_results_file
+
+# Outputs: 
+#  A list containing the following elements: 
+#   observed_results: a table with the following columns: motif_type, observed counts
+#   random_results: a table with the following columns: motif_type, randomized counts
+#   is_siginificant: a table with the following columns: motif_type, is_significant (TRUE or FALSE)
+
+tidy_up_list_of_input_files <- function(negative_interactions_full_file, 
+										negative_interactions_random_file,
+										negative_interactions_observed_file
+) { 
+	### Print the analysis of negative genetic interactions 
+	negative_interactions_full     <- read.table ( file= file.path( negative_interactions_full_file) )
+	
+	negative_interactions_full     <- dplyr::arrange ( negative_interactions_full, desc( observed_counts ) ) 
+	
+	
+	negative_interactions_random   <- read.table ( file=  file.path( negative_interactions_random_file  ))
+	
+	negative_interactions_observed <- read.table ( file= file.path( negative_interactions_observed_file), 
+												   header=TRUE )
+	
+	return_list_of_tidied_data <- print_box_plot_observed_vs_random_helper(negative_interactions_observed, negative_interactions_random, 
+																		   negative_interactions_full, significant_types_of_motifs,
+																		   ordering=significant_types_of_motifs, plot_type="boxplot", 
+																		   background_colour=plot_background_colour, 
+																		   axis_text_colour=axis_text_colour, 
+																		   false_positive_counts_threshold = 0.02, p_value_threshold=0.05,
+																		   p_value_column="enrichment_adj_p_values")
+	
+	return( return_list_of_tidied_data )
+}
+
+
+## Function: combine_graphs_using_faceting
+
+## Description: I use this to combine several plots together using faceting 
+## This saves me from using Inkscape to combine the several graphs into one multi-panel figure.
+
+## Inputs:
+# input_list: list of files with the following structure:
+#    list(  pvalues_results_file_list, 
+#			 random_results_file_list, 
+#			 observed_results_file_list)
+
+# list_of_facet_types:
+#     List of categories for faceting with vertical stacking
+
+# output_file_name: name of output file
+
+# graphic_width: Width of the output graph
+
+# graphic_height: Height of the output graph
+
+# Outputs:
+#  A list containing the following elements: 
+#   observed_results: a table with the following columns: motif_type, observed counts, facet_type
+#   random_results: a table with the following columns: motif_type, randomized counts, facet_type 
+#   is_siginificant: a table with the following columns: motif_type, is_significant (TRUE or FALSE), facet_type    
+
+combine_graphs_using_faceting <- function ( input_list, list_of_facet_types, sort_facet_decreasing =FALSE) {
+	
+	# Create the tidy up the list data tables
+	list_of_tidied_data <- pmap( input_list, 
+								 tidy_up_list_of_input_files)
+	
+	list_of_tidy_observed_data <- map(list_of_tidied_data, function(x) { x[["observed_data"]]} )
+	list_of_tidy_random_data <- map(list_of_tidied_data, function(x) { x[["random_data"]]} )
+	list_of_tidy_is_significant_vector <- map(list_of_tidied_data, function(x) { x[["is_significant"]]} )
+	
+	## work on observed_data
+	list_of_tidy_observed_data_facet_type <- map2( list_of_tidy_observed_data, list_of_facet_types, 
+												   function(x, y){  dplyr::mutate( x, facet_type=y )       }   )
+	
+	names( list_of_tidy_observed_data_facet_type) <- list_of_facet_types
+	
+	list_of_tidy_observed_data_facet_type <- list_of_tidy_observed_data_facet_type[ as.character(sort(list_of_facet_types, decreasing=sort_facet_decreasing)) ]
+	
+	## work on random_data
+	list_of_tidy_random_data_facet_type  <- map2( list_of_tidy_random_data, list_of_facet_types, 
+												  function(x, y){  dplyr::mutate( x, facet_type=y )       }   )
+	
+	names( list_of_tidy_random_data_facet_type ) <- list_of_facet_types
+	
+	list_of_tidy_random_data_facet_type <- list_of_tidy_random_data_facet_type[ as.character(sort(list_of_facet_types, decreasing=sort_facet_decreasing)) ]
+	
+	
+	## work on is_significant
+	
+	transpose_is_significant_table_and_add_facet_types <- function(x, y){  
+		
+		transposed_data <- as.data.frame( x) %>% tibble::rownames_to_column()
+		colnames( transposed_data) <- c( "motf_type", "is_significant") 
+		
+		transposed_data <- dplyr::mutate( transposed_data, facet_type=y )       
+		
+		return( transposed_data)
+	} 
+	
+	list_of_tidy_is_significant_facet_type <- map2( list_of_tidy_is_significant_vector, list_of_facet_types, 
+													transpose_is_significant_table_and_add_facet_types)
+	
+	names( list_of_tidy_is_significant_facet_type) <- list_of_facet_types
+	
+	list_of_tidy_is_significant_facet_type <- list_of_tidy_is_significant_facet_type[ as.character(sort(list_of_facet_types, decreasing=sort_facet_decreasing)) ]
+	
+	
+	## Bind all rows from all tables together. Each table represents result from one percentile level
+	observed_data_tidy    <- purrr::reduce (list_of_tidy_observed_data_facet_type, rbind)
+	random_data_tidy      <- purrr::reduce (list_of_tidy_random_data_facet_type, rbind)
+	is_significant_tidy   <- purrr::reduce (list_of_tidy_is_significant_facet_type, rbind)
+	
+	## Change facet as factor and relevel
+	observed_data_tidy[,"facet_type"]  <- factor ( observed_data_tidy[,"facet_type"], levels = sort(list_of_facet_types, decreasing=sort_facet_decreasing ))
+	random_data_tidy[,"facet_type"]    <- factor ( random_data_tidy[,"facet_type"], levels = sort(list_of_facet_types, decreasing=sort_facet_decreasing ))
+	is_significant_tidy[,"facet_type"] <- factor ( is_significant_tidy[,"facet_type"], levels = sort(list_of_facet_types, decreasing=sort_facet_decreasing ))
+
+	
+	return( list ( observed_data=observed_data_tidy, 
+				   random_data=random_data_tidy, 
+				   is_significant=is_significant_tidy))	
+}
+
+
+## Input:
+# observed_data, random_data, is_significant: These are outputsf from the 'combine_graphs_using_faceting' function
+#   observed_results: a table with the following columns: motif_type, observed counts, facet_type
+#   random_results: a table with the following columns: motif_type, randomized counts, facet_type 
+#   is_siginificant: a table with the following columns: motif_type, is_significant (TRUE or FALSE), facet_type    
+# Outputs:
+#    Graph saved as specified output file
+
+motif_type_significance_box_plot_vertical_stack_faceting <- function( observed_data, random_data, is_significant, output_file_name, graphic_width, graphic_height) {
+	
+	significance_color <- sapply ( is_significant[,"is_significant"], function(x) {  return(boolean_to_colour(x)) } )
+	
+	background_colour <- "white"
+	
+	return_plot <- ggplot(random_data, aes(key, value)) + 
+		geom_boxplot() + 
+		geom_point( data=observed_data, aes(x=key, y=value  )   ## Add the observed values as additional points
+					, color=significance_color, size=4 , alpha=0.5) 	+ # , size=4 , alpha=0.5
+		xlab( "Types of Motifs") 	+ 
+		ylab( "Counts")  + 
+		facet_grid( facet_type ~., scales="free") +
+		theme( plot.background = element_rect(fill = background_colour, color=background_colour), 
+			   axis.text = element_text(colour = axis_text_colour),
+			   axis.title = element_text(colour = axis_text_colour), 
+			   axis.text.x=element_text(face="italic"))
+	
+	ggsave(output_file_name, 
+		   plot=return_plot, width=graphic_width, 
+		   height=graphic_height ) 
+}	
+
+
+##########################################################
+
 
 

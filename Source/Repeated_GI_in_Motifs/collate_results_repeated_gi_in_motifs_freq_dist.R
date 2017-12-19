@@ -130,8 +130,8 @@ statistical_analysis <- observed_data %>%
 	dplyr::select ( one_of ( c( "motif_type", "counts", "observed_count", "p_value", "adj_p_value", "is_significant") )) %>%
 	dplyr::rename(total_count = observed_count) %>%
 	dplyr::mutate( is_significant_color = factor ( boolean_to_colour(is_significant), levels=c("red", "blue") )) %>%
-	dplyr::mutate( total_count = total_count + 1) %>%  ### Add 1 as a pseudo count for drawing in log scale
-	dplyr::filter( counts <= max_num_overlapping_triplets_to_show )  
+	dplyr::mutate( total_count = total_count + 1) # %>%  ### Add 1 as a pseudo count for drawing in log scale
+	# dplyr::filter( counts <= max_num_overlapping_triplets_to_show )  
      ## For the protein complexes class, there is a genetic interaction with up to ~80 overlapping triplets, so we want to trim the x-axis smaller.
 	
 

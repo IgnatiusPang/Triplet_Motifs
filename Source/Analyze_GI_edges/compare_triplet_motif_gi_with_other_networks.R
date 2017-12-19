@@ -26,6 +26,11 @@ observed_results_table_file   <- "observed_results_table_file.tab"
 randomized_results_table_file <- "randomized_results_table.tab"
 output_full_results_table     <- "full_results_table.tab"
 
+
+supplementary_data_directory <- file.path(results_directory, "Supplementary_Files" ) 
+create_directory_if_not_exists(supplementary_data_directory)
+
+
 if (is_run_locally) {
 	
 	results_directory <- file.path( results_directory, "Bootstrap_p_values_temp/Analyze_GI_edges" ) 
@@ -185,6 +190,71 @@ count_triplet_motifs_compare_with_other_networks <- function (triplet_motifs, ty
 	return( triplet_motif_counts)
 }
 
+
+## Function to get table for supplementary data in the 
+count_triplet_motifs_compare_with_other_networks_for_supplementary <- function (negative_genetic_interaction, interactions_combined, 
+																				oln_id_a, oln_id_b, type_ac, type_bc, interaction_type_abbrev, my_counts, total_count ) {
+	
+	colnames( negative_genetic_interaction)[colnames( negative_genetic_interaction) == "oln_id_a"] <-  "query_oln_id_edited"
+	colnames( negative_genetic_interaction)[colnames( negative_genetic_interaction) == "oln_id_b"] <-  "array_oln_id_edited"
+	
+	my_join_ac <- c( "query_oln_id_edited" = "oln_id_a")
+	my_join_bc <- c( "array_oln_id_edited"= "oln_id_a", "oln_id_b" = "oln_id_b" )
+	my_selected_columns <- c("query_oln_id_edited", "array_oln_id_edited", 
+							 "oln_id_b",  "interaction_type_abbrev.x",
+							 "interaction_type_abbrev.y", "genetic_interaction_score")
+	my_column_names <- c( "oln_id_a", 
+						  "oln_id_b",
+						  "oln_id_c",
+						  "type_ac",
+						  "type_bc",
+						  "genetic_interaction_score" )      
+	
+	triplet_motifs <- form_triplet_motifs(negative_genetic_interaction, interactions_combined, interactions_combined,
+										  my_join_ac, my_join_bc, my_selected_columns, my_column_names)
+	
+	table_join_by_names <- c( oln_id_a, oln_id_b)
+	names( table_join_by_names ) <- c( oln_id_a, oln_id_b)
+	
+	compare_gi_with_other_networks <- dplyr::left_join(triplet_motifs, interactions_combined,
+													   by=table_join_by_names) 
+	
+	compare_gi_with_other_networks <- as.data.frame(compare_gi_with_other_networks)
+	
+	compare_gi_with_other_networks[,interaction_type_abbrev] <- convert_edge_type_name_to_paper_style( compare_gi_with_other_networks[,interaction_type_abbrev])
+	
+	compare_gi_with_other_networks <- compare_gi_with_other_networks %>%
+										dplyr::select ( one_of ( c( oln_id_a, 
+																	oln_id_b,
+																	"oln_id_c",
+																	type_ac,
+																	type_bc, 
+																	interaction_type_abbrev))) %>%
+										dplyr::filter_(interp(~v!="None", v=as.name(interaction_type_abbrev))) %>%
+										dplyr::mutate( overlapping_edge = 1) %>%
+										tidyr::spread(  interaction_type_abbrev, "overlapping_edge", fill=0)
+	
+	return(compare_gi_with_other_networks)
+	
+}	
+
+#########################################################
+
+if (   length(options) == 0 )  {
+	
+	supplementary_table <- count_triplet_motifs_compare_with_other_networks_for_supplementary( filtered_costanzo_stringent, 
+																		interactions_combined, 
+																		"oln_id_a", "oln_id_b",
+																		"type_ac", "type_bc", 
+																		"interaction_type_abbrev", 
+																		"count", "my_total_count")
+	head(supplementary_table )
+	
+	write.table ( supplementary_table, file=file.path( supplementary_data_directory, "triplets_with_overlapping_edges.tab"),
+				  sep="\t", quote=FALSE, row.names = FALSE)
+}
+
+
 #########################################################
 
 compare_gi_with_other_networks_final_results <- count_triplet_motifs_compare_with_other_networks_second_step( filtered_costanzo_stringent, 
@@ -251,19 +321,10 @@ list_of_randomized_triplet_motif_counts <- mclapply ( X=1:number_of_randomized_t
 
 ### Concatenate the results together 
 rbind_list_elements_recursively <- function ( x) {
-=======
-compare_gi_with_other_networks <- compare_gi_with_other_networks %>% 
-									dplyr::group_by ( type_ac, type_bc, interaction_type_abbrev ) %>%
-									dplyr::summarise(count=n())
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 	
 	if (length(x)== 1 ) {
 		return ( x[[1]])
 	} else {
-		
 		
 		recursive_result <- rbind_list_elements_recursively(x[2:length(x)])
 		

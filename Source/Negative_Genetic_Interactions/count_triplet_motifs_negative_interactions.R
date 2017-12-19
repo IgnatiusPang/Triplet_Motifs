@@ -4,14 +4,14 @@
 ### Description: Count the observed number of triplet motifs. Randomize the respective networks and count the number triplet motifs, repeat randomization 1000 times.
 ### Obtain the bootstrap p-value
 
-#########################################################
+##########################################################
 # Source location
 
 # psql sbi_triplet_motifs
 # cd '/media/z3371724/PostDoc/2016/Triplet_Motifs/Source/'
 # 
 
-#########################################################
+##########################################################
 ### Global Parameters 
 
 options <- commandArgs(trailingOnly = TRUE)

@@ -1153,6 +1153,172 @@ count_triplet_motifs_in_protein_complexes <- function ( triplet_motifs_list, pro
 	return ( motif_and_protein_complexes)
 }
 
+#########################################################
+
+
+count_triplet_motifs_go_terms_helper <- function ( triplet_motifs_list, go_terms_table) {
+	
+	motif_and_go_terms <- dplyr::left_join( triplet_motifs_list, go_terms_table, by=c("oln_id_a" = "oln_id") ) %>%
+		dplyr::rename( go_term_a = go_term) %>%
+		dplyr::left_join( go_terms_table, by=c("oln_id_b" = "oln_id") ) %>%
+		dplyr::rename( go_term_b = go_term) %>%
+		dplyr::left_join( go_terms_table, by=c("oln_id_c" = "oln_id") ) %>%
+		dplyr::rename( go_term_c = go_term) %>%
+		dplyr::filter( go_term_a == go_term_b & go_term_b == go_term_c) 
+	
+	return ( motif_and_go_terms)
+}
+
+## Function: count_triplet_motifs_go_terms
+## Count the number of triplet motif in which the protein products of all three genes have the same GO terms
+## Input:
+## triplet_motifs_list: A table containing the global list of triplet motifs
+##	This input table must contain the following columns, 
+#   oln_id_a - The Ordered Locus Name of Gene A
+#   oln_id_b - The Ordered Locus Name of Gene B
+#   oln_id_c - The Ordered Locus Name of Gene C
+#   type_ac - The type of interactions between gene A and gene C, one of p, ku, kd, tu, td
+#   type_bc - The type of interactions between gene B and gene C, one of p, ku, kd, tu, td  
+## go_terms_table: A table containing the list of GO terms for each protein.
+##	This input table must contain the following columns, 
+#   go_term - The GO term of the protein
+#   oln_id - The Ordered Locus Name corresponding to the protein 
+count_triplet_motifs_go_terms <- function ( triplet_motifs_list, go_terms_table) {
+	
+	motif_and_go_terms <- count_triplet_motifs_go_terms_helper ( triplet_motifs_list, go_terms_table) 
+	
+	## This following two lines ensure that we don't double count protien complexes. 
+	## Sometimes, all three proteins can be found in more than one complexes.
+	motif_and_go_terms <- motif_and_go_terms %>% 
+		dplyr::select(oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc) %>%
+		dplyr::distinct() %>%
+		count_triplet_motifs()
+	
+	return ( motif_and_go_terms)
+}
+
+
+#########################################################
+
+count_triplet_motifs_phenotypes_helper <- function ( triplet_motifs_list, filtered_phenotype_data, is_keep_phenotype_list = FALSE) {
+	
+	
+	motif_and_phenotypes <- dplyr::left_join( triplet_motifs_list, filtered_phenotype_data, by=c("oln_id_a" = "oln_id") ) %>%
+		dplyr::rename( phenotype_label_a = phenotype_label_list) %>%
+		
+		## join C phenotype 
+		dplyr::inner_join( filtered_phenotype_data, by=c("oln_id_b" = "oln_id") ) %>%
+		dplyr::rename( phenotype_label_b = phenotype_label_list) %>% as.data.frame()
+	
+	## Find the number of shared phenotype between gene A and gene B. Only keep phenotype if at least one gene is shared 
+	
+	motif_and_phenotypes_v2 <- motif_and_phenotypes %>%
+		dplyr::mutate( phenotype_shared_ab = map2(  phenotype_label_a, phenotype_label_b,  intersect )) %>%
+		dplyr::mutate( number_phenotype_shared_ab = map(phenotype_shared_ab, length) ) %>% 
+		dplyr::filter ( number_phenotype_shared_ab > 0  ) %>%
+		dplyr::select ( - phenotype_label_a) %>%
+		dplyr::select ( - phenotype_label_b) 
+	## join gene C phenotype
+	
+	motif_and_phenotypes_v3 <-  motif_and_phenotypes_v2 %>%
+		dplyr::inner_join( filtered_phenotype_data, by=c("oln_id_c" = "oln_id") ) %>%
+		dplyr::rename( phenotype_label_c = phenotype_label_list) %>%
+		dplyr::mutate ( phenotype_intersect_abc= map2(phenotype_shared_ab, phenotype_label_c, intersect )   ) %>%
+		dplyr::mutate( num_phenotype_shared = map(phenotype_intersect_abc, length) ) %>%
+		dplyr::filter( num_phenotype_shared > 0 ) 
+	
+	
+	if ( is_keep_phenotype_list == FALSE) {
+		motif_and_phenotypes_v3 <- motif_and_phenotypes_v3 %>%
+			dplyr::select(oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, num_phenotype_shared) 
+	} else {
+		
+		motif_and_phenotypes_v3 <- motif_and_phenotypes_v3 %>%
+			dplyr::select(oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc, num_phenotype_shared, phenotype_intersect_abc) 
+	}
+
+	return ( motif_and_phenotypes_v3)
+}
+
+## Function: count_triplet_motifs_phenotypes
+## Count the number of triplet motif in which the protein products of all three genes have the same GO terms
+## Input:
+## triplet_motifs_list: A table containing the global list of triplet motifs
+##	This input table must contain the following columns, 
+#   oln_id_a - The Ordered Locus Name of Gene A
+#   oln_id_b - The Ordered Locus Name of Gene B
+#   oln_id_c - The Ordered Locus Name of Gene C
+#   type_ac - The type of interactions between gene A and gene C, one of p, ku, kd, tu, td
+#   type_bc - The type of interactions between gene B and gene C, one of p, ku, kd, tu, td  
+#   filtered_phenotype_data - A table containing the list of GO terms for each protein.
+##	This input table must contain the following columns, 
+#   phenotype_label - The phenotype associated with the protein
+#   oln_id - The Ordered Locus Name corresponding to the protein 
+count_triplet_motifs_phenotypes <- function ( triplet_motifs_list, filtered_phenotype_data) {
+	
+	motif_and_phenotypes <- count_triplet_motifs_phenotypes_helper ( triplet_motifs_list, filtered_phenotype_data, is_keep_phenotype_list=FALSE) 
+	
+	## This following two lines ensure that we don't double count protien complexes. 
+	## Sometimes, all three proteins can be found in more than one complexes.
+	motif_and_phenotypes <- motif_and_phenotypes %>% 
+		dplyr::select(oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc) %>%
+		dplyr::distinct() %>%
+		count_triplet_motifs()
+	
+	return ( motif_and_phenotypes)
+}
+
+
+#########################################################
+count_triplet_motifs_string_helper <- function ( triplet_motifs_list, string_scores_table) {
+	
+	motif_and_strings <- dplyr::left_join( triplet_motifs_list, string_scores_table, by=c("oln_id_a" = "oln_id_x",
+																						  "oln_id_b" = "oln_id_y") ) %>%
+		dplyr::rename( scores_ab = scores) %>%
+		dplyr::left_join( string_scores_table, by=c("oln_id_b" = "oln_id_x", 
+													"oln_id_c" = "oln_id_y") ) %>%
+		dplyr::rename( scores_bc = scores) %>%
+		dplyr::left_join( string_scores_table, by=c("oln_id_a" = "oln_id_x",
+													"oln_id_c" = "oln_id_y") ) %>%
+		dplyr::rename( scores_ac = scores) %>%
+		
+		dplyr::mutate ( scores_ab = ifelse( is.na(scores_ab), 0, scores_ab),
+						scores_bc = ifelse( is.na(scores_bc), 0, scores_bc),
+						scores_ac = ifelse( is.na(scores_ac), 0, scores_ac)
+						) %>%
+		
+		dplyr::filter( scores_ab > 0 & scores_bc > 0 & scores_ac > 0 ) 
+	
+	return ( motif_and_strings)
+}
+
+## Function: count_triplet_motifs_strings
+## Count the number of triplet motif in which the protein products of all three genes have the same GO terms
+## Input:
+## triplet_motifs_list: A table containing the global list of triplet motifs
+##	This input table must contain the following columns, 
+#   oln_id_a - The Ordered Locus Name of Gene A
+#   oln_id_b - The Ordered Locus Name of Gene B
+#   oln_id_c - The Ordered Locus Name of Gene C
+#   type_ac - The type of interactions between gene A and gene C, one of p, ku, kd, tu, td
+#   type_bc - The type of interactions between gene B and gene C, one of p, ku, kd, tu, td  
+## string_scores_table: A table containing the list of GO terms for each protein.
+##	This input table must contain the following columns, 
+#   scores - The string score of the protein
+#   oln_id - The Ordered Locus Name corresponding to the protein 
+count_triplet_motifs_strings <- function ( triplet_motifs_list, string_scores_table) {
+	
+	motif_and_strings <- count_triplet_motifs_string_helper ( triplet_motifs_list, string_scores_table) 
+	
+	## This following two lines ensure that we don't double count protien complexes. 
+	## Sometimes, all three proteins can be found in more than one complexes.
+	motif_and_strings <- motif_and_strings %>% 
+		dplyr::select(oln_id_a, oln_id_b, oln_id_c, type_ac, type_bc) %>%
+		dplyr::distinct() %>%
+		count_triplet_motifs()
+	
+	return ( motif_and_strings)
+}
 
 
 #########################################################

@@ -38,7 +38,8 @@ array_job_id 			     <- NULL
 random_number_seed 		     <- 1985
 number_of_cores_to_use 		 <- 24
 number_of_randomized_trials  <- 100
-num_iteration_rewire_network <- NULL # Number of times each network is rewired before counting the triplet motifs
+num_iteration_rewire_network <- NULL # Number of times each network is rewired before counting the triplet motifs.
+									 # If null, this is equal to the number of edges in the network. 
 use_costanzo_2010_dataset 	 <- FALSE
 
 
@@ -51,8 +52,8 @@ results_directory 		<- "./"
 source_directory_common <- "./"
 
 if ( length(options) != 0 &
-	! (  options[1] == 'katana' | options[1] == 'clive' | options[1] == 'local'  )  ) {
-		stop ( 'First command line parameter must either by katana, clive, or local') 
+	 ! (  options[1] == 'katana' | options[1] == 'clive' | options[1] == 'local'  )  ) {
+	stop ( 'First command line parameter must either by katana, clive, or local') 
 }
 
 if ( length(options) != 0 
@@ -101,7 +102,7 @@ if (is_run_locally == TRUE) {
 	number_of_cores_to_use <- 4
 	number_of_randomized_trials <- 4
 	num_iteration_rewire_network <- 0.001 # Number of times each network is rewired before counting the triplet motifs
-
+	
 	data_directory <- paste( local_base_directory, "Data/Triplet_Motifs_R_data/", sep="")
 	source_directory <- paste( local_base_directory, "Source/", sep="")
 	results_directory <- paste( local_base_directory, "Results/", sep="")

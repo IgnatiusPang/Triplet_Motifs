@@ -5,3 +5,4 @@ echo "    ${TMPDIR}"
 echo "    ${PBS_O_WORKDIR}"
 echo
 
+rsync -a ${TMPDIR}/*.log ${PBS_O_WORKDIR}/

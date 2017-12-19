@@ -91,6 +91,29 @@ enriched_functions <- read.table ( file= file.path( results_directory, "SAFE/201
 								   header=TRUE, stringsAsFactors = TRUE, 
 						    na.strings="", quote="", sep="\t")
 
+## Table list all triplets where the genetic interactions overlap with other types of interactions 
+triplets_gi_overlapping_other_edges <- read.table( file.path(supplementary_data_directory, "triplets_with_overlapping_edges.tab"), 
+										header=TRUE, sep="\t", stringsAsFactors = FALSE, quote="" )
+
+
+## List of GO terms shared by all three proteins in the triplet 
+## The tables need t be pre-computed by the script: "GO_terms/count_go_terms.R"
+shared_go_terms_BP_per_triplet <- read.table( file.path(supplementary_data_directory, "shared_go_terms_BP_per_triplet.tab"), 
+										header=TRUE, sep="\t", stringsAsFactors = FALSE, quote="" )
+shared_go_terms_CC_per_triplet <- read.table( file.path(supplementary_data_directory, "shared_go_terms_CC_per_triplet.tab"), 
+										header=TRUE, sep="\t", stringsAsFactors = FALSE, quote="" )
+shared_go_terms_MF_per_triplet <- read.table( file.path(supplementary_data_directory, "shared_go_terms_MF_per_triplet.tab"), 
+										header=TRUE, sep="\t", stringsAsFactors = FALSE, quote="" )
+
+## List of phenotypes shared by all three proteins in the triplet 
+## Phenotype data obtained from SGD.
+## This table needs to be pre-computed by the script 'Phenotype/count_triplets_with_same_phenotype.R'
+triplet_shared_phenotype <- read.table( file.path(supplementary_data_directory, "motif_and_phenotypes_detail.txt"), 
+										header=TRUE, sep="\t", stringsAsFactors = FALSE, quote="" )
+
+
+
+
 ```
 
 ## Negative Genetic interactions 
@@ -444,6 +467,68 @@ from triplet_motifs_costanzo_2016  motifs
 ", stringsAsFactors=FALSE)
 
 
+## Calculate the number of other triplets sharing this negative genetic interactions
+num_of_overlapping_triplets_table <-  densely_annotated_triplet_motif %>%
+								dplyr::select ( one_of ( c( "oln_id_a", "oln_id_b", "oln_id_c", 
+															"type_of_interaction_a_to_c", "type_of_interaction_b_to_c" ))) %>%
+								dplyr::group_by( oln_id_a, oln_id_b) %>%
+								# Remember that we need to minus one here to exclude itself from the count
+								dplyr::summarise( num_of_other_triplets_sharing_this_genetic_interaction = n() - 1) %>% 
+								dplyr::ungroup()
+
+
+densely_annotated_triplet_motif <- sqldf( " select x.*
+											, coalesce( overlap.P, 0) as P
+											, coalesce( overlap.K1, 0) as K1
+											, coalesce( overlap.K2, 0) as K2
+											, coalesce( overlap.T1, 0) as T1	
+											, coalesce( overlap.T2, 0) as T2
+											, coalesce( repeated_gi.num_of_other_triplets_sharing_this_genetic_interaction, 0) 
+                                   					as num_of_other_triplets_sharing_this_genetic_interaction
+											, coalesce(w_bp.go_BP_count, 0 ) as num_go_BP_shared
+											, w_bp.go_BP_intersect_abc
+											, coalesce(w_cc.go_CC_count, 0 ) as num_go_CC_shared
+											, w_cc.go_CC_intersect_abc
+											, coalesce(w_mf.go_MF_count, 0 ) as num_go_MF_shared
+											, w_mf.go_MF_intersect_abc
+											, coalesce(y.num_phenotype_shared, 0) num_phenotype_shared
+											, y.phenotype_intersect_abc
+										    from densely_annotated_triplet_motif x
+												 left join triplets_gi_overlapping_other_edges overlap 
+												   on  x.oln_id_a = overlap.oln_id_a
+														and x.oln_id_b = overlap.oln_id_b
+														and x.oln_id_c = overlap.oln_id_c 
+														and x.type_of_interaction_a_to_c = upper(overlap.type_ac)
+														and x.type_of_interaction_b_to_c = upper(overlap.type_bc)
+												 left join num_of_overlapping_triplets_table repeated_gi
+													on x.oln_id_a = repeated_gi.oln_id_a
+														and x.oln_id_b = repeated_gi.oln_id_b
+												 left join shared_go_terms_BP_per_triplet  w_bp
+										  			on  x.oln_id_a = w_bp.oln_id_a
+														and x.oln_id_b = w_bp.oln_id_b
+														and x.oln_id_c = w_bp.oln_id_c 
+														and x.type_of_interaction_a_to_c = upper(w_bp.type_ac)
+														and x.type_of_interaction_b_to_c = upper(w_bp.type_bc)
+												 left join shared_go_terms_CC_per_triplet  w_cc
+										  			on  x.oln_id_a = w_cc.oln_id_a
+														and x.oln_id_b = w_cc.oln_id_b
+														and x.oln_id_c = w_cc.oln_id_c 
+														and x.type_of_interaction_a_to_c = upper(w_cc.type_ac)
+														and x.type_of_interaction_b_to_c = upper(w_cc.type_bc)
+												 left join shared_go_terms_MF_per_triplet  w_mf
+										  			on  x.oln_id_a = w_mf.oln_id_a
+														and x.oln_id_b = w_mf.oln_id_b
+														and x.oln_id_c = w_mf.oln_id_c 
+														and x.type_of_interaction_a_to_c = upper(w_mf.type_ac)
+														and x.type_of_interaction_b_to_c = upper(w_mf.type_bc)
+										  		 left join triplet_shared_phenotype y
+										  			on  x.oln_id_a = y.oln_id_a
+														and x.oln_id_b = y.oln_id_b
+														and x.oln_id_c = y.oln_id_c 
+														and x.type_of_interaction_a_to_c = upper(y.type_ac)
+														and x.type_of_interaction_b_to_c = upper(y.type_bc)
+														 ")
+
 write.table ( densely_annotated_triplet_motif, file.path(supplementary_data_directory, "list_of_triplet_motifs.tab"),
 			  sep="\t", 
 			  quote=FALSE,
@@ -454,7 +539,7 @@ dim (densely_annotated_triplet_motif )
 ```
 
 
-## Interactions that are from triplet motifs only
+## Interactions that are part of triplets, excluding those that are not part of triplets
 ```{r}
 
 gene_a <- as.character( as.vector(c( t(triplet_motifs_costanzo_2016[,1]) ,

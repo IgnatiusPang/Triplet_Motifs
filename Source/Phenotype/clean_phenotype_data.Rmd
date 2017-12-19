@@ -1,0 +1,176 @@
+---
+title: "Clean SGD's phenotype data"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(data.table)
+
+```
+
+## Commmand to transfer phenotye data from UNSW to home
+```{r}
+# rsync -avh  babs:/home/ignatius/PostDoc/2016/Triplet_Motifs/Data/SGD/Phenotype_20171201         /home/ignatius/PostDoc/2016/Triplet_Motifs/Data/SGD
+ 
+```
+
+```{r}
+
+# remove viable
+# remove inviable
+# strain_background match S288C only
+# reference not 16455487
+
+# mutant_type + phenotype + chemical 
+
+phenotype_data <- read.table ( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Data/SGD/Phenotype_20171201/phenotype_data.tab", 
+			 sep="\t", header=FALSE, stringsAsFactors = FALSE, quote = "", comment.char="")
+
+colnames(phenotype_data ) <- c( "oln_id",	"feature_type",	"gene_name",	"sgd_id",	
+	"reference",	"experiment_type",	"mutant_type",	"allele",	"strain_background",	"phenotype"	,
+	"chemical",	"condition",	"details",	"reporter" )
+
+
+## Only get the chemical-genetics data 
+filtered_phenotype_data_temp <- phenotype_data %>%
+						dplyr::filter( !( phenotype %in% c( 'viable', 'inviable' ) ) ) %>%
+						dplyr::filter(  strain_background  %in% c( "S288C", "S288C (BY4742)", 
+																   "S288C (BY4743)", "S288C (BY4741)") ) %>% 
+						dplyr::filter( grepl( "PMID: 16455487\\|", reference ) == FALSE ) %>% # Sopko overexpression dataset is excluded here
+						dplyr::filter( grepl( ": normal", phenotype ) == FALSE ) %>%  ## avoid any normal phenotype
+						dplyr::filter ( grepl( "resistance to chemicals", phenotype ) == TRUE |
+											grepl( "thermotolerance", phenotype) == TRUE |
+											grepl( "resistance", phenotype) == TRUE |
+											grepl( "morphology", phenotype) == TRUE) %>%
+ 						dplyr::mutate ( phenotype_label = paste ("(", mutant_type, ", ",
+																	 phenotype, ", ", chemical, ")", sep=""  ))
+
+
+head( filtered_phenotype_data_temp)
+
+filtered_phenotype_data_temp %>% 
+	dplyr::select (one_of(c('oln_id'))) %>% 
+	dplyr::distinct() %>% 
+	dplyr::count()
+
+
+```
+
+### Filters that are no longer needed
+```{r}
+							# dplyr::filter( !(grepl( "competitive fitness: decreased", phenotype ) == TRUE &  chemical==" ")  ) %>%
+							# dplyr::filter( !(grepl( "competitive fitness: increaseed", phenotype ) == TRUE &  chemical==" ")  ) %>%
+							# dplyr::filter( !(grepl( "haploinsufficient", phenotype ) == TRUE &  chemical==" " )  ) %>%
+							# dplyr::filter( !(grepl( "haploproficient", phenotype ) == TRUE  &  chemical==" " ) ) %>%
+							# dplyr::filter( !(grepl( "viability: decreased", phenotype ) == TRUE  &  chemical==" " ) ) %>%
+							# dplyr::filter( !(grepl( "growth", phenotype ) == TRUE  &  chemical==" " ) ) %>%
+							# dplyr::filter( !(grepl( "replicative lifespan: decreased", phenotype ) == TRUE  &  chemical==" " ) ) %>%
+```
+
+## lookup table of phenotype to id
+```{r}
+
+phenotype_list <-  as.factor( filtered_phenotype_data_temp[, "phenotype_label"])
+
+phenotype_to_id_lookup_table <- data.frame(  id = as.numeric(phenotype_list), 
+							 phenotype_label=phenotype_list ) 
+
+write.table ( phenotype_to_id_lookup_table,
+			  file.path("/home/ignatius/PostDoc/2016/Triplet_Motifs/Data/SGD/Phenotype_20171201/phenotype_to_id_lookup_table.tab"),
+			  row.names = FALSE, sep="\t", quote=FALSE)
+
+```
+
+## a phenotype must be associated with at least 3 genes for it to be included in triplet analysis
+```{r}
+
+filtered_phenotype_data_num_class <- filtered_phenotype_data_temp
+
+
+filtered_phenotype_data_num_class[, "phenotype_label"] <- as.numeric( as.factor(filtered_phenotype_data_num_class[, "phenotype_label"])  )
+
+
+to_include_phenotype <- table ( as.numeric( filtered_phenotype_data_num_class[, "phenotype_label"] )  ) > 2 
+to_include_phenotype_table <- data.frame( to_include = to_include_phenotype)
+rownames( to_include_phenotype_table) <- as.integer(names( to_include_phenotype))
+to_include_phenotype_table <- tibble::rownames_to_column(to_include_phenotype_table)
+to_include_phenotype_table[,"rowname"] <- as.integer( to_include_phenotype_table[,"rowname"] )
+
+filtered_phenotype_data_num_class <-  filtered_phenotype_data_num_class %>%
+	dplyr::left_join(to_include_phenotype_table, by=c( "phenotype_label" = "rowname")) %>%
+	dplyr::filter( to_include == TRUE) %>%
+	dplyr::select( -to_include)
+
+ 							
+dim(filtered_phenotype_data_num_class)
+
+write.table ( filtered_phenotype_data_num_class,
+			  file.path("/home/ignatius/PostDoc/2016/Triplet_Motifs/Data/SGD/Phenotype_20171201/filtered_phenotype_data_num_class.tab"),
+			  row.names = FALSE, sep="\t", quote=FALSE)
+```
+
+```{r}
+filtered_phenotype_data <- filtered_phenotype_data_num_class %>%
+							dplyr::select ( one_of( c("oln_id", "phenotype_label"))) %>%
+							dplyr::distinct()
+
+filtered_phenotype_list_table <- filtered_phenotype_data %>%
+								 dplyr::group_by( oln_id) %>%
+								 dplyr::summarise( phenotype_label_list=list(phenotype_label)  ) %>%
+								 as.data.frame()
+
+
+filtered_phenotype_data_detailed_list <- filtered_phenotype_data_temp %>%
+										 dplyr::select ( one_of( c("oln_id", "phenotype_label"))) %>%
+										 dplyr::distinct() %>%
+								 		 dplyr::group_by( oln_id) %>%
+								 		 dplyr::summarise( phenotype_label_list=list(phenotype_label)  ) %>%
+								 		 as.data.frame()
+
+
+```
+
+```{r}
+# 
+# pairs_of_genes_with_same_phenotype <- filtered_phenotype_data %>%
+# 										dplyr::inner_join( filtered_phenotype_data, by=c("phenotype_label"= "phenotype_label")) %>%
+# 										dplyr::filter( oln_id.x > oln_id.y) 
+# 
+# dim( pairs_of_genes_with_same_phenotype)
+# 
+# 
+# temp_phenotype <- dplyr::rename(filtered_phenotype_data, "oln_id.z" = "oln_id" )
+# 
+# triplets_of_genes_with_same_phenotype	<- pairs_of_genes_with_same_phenotype	%>%
+# 										dplyr::inner_join( temp_phenotype, 
+# 														   by=c("phenotype_label"= "phenotype_label")) %>%
+# 										dplyr::filter( oln_id.x != oln_id.z & oln_id.y != oln_id.z )
+# 
+# 
+# dim( triplets_of_genes_with_same_phenotype)
+
+
+
+```
+
+
+## Convert into a matrix of phenotypes
+```{r}
+
+# filtered_phenotype_data_for_matrix <- filtered_phenotype_data_temp %>%
+# 							dplyr::select ( one_of( c("oln_id", "phenotype_label"))) %>%
+# 							dplyr::distinct() %>%
+# 							dplyr::mutate( phenotype_label = as.integer(as.factor(phenotype_label))) %>%
+# 							dplyr::mutate( has_phenotype = 1)
+# 
+# 
+# head( filtered_phenotype_data_for_matrix)
+
+#phenotype_data_matrix <- tidyr::spread( filtered_phenotype_data_for_matrix, key =phenotype_label, value=has_phenotype, fill=0)
+
+#head(phenotype_data_matrix[1:10,])
+
+# gene_pair_phenotype_distance_matirx <- dist( phenotype_data_matrix)
+
+```

@@ -208,8 +208,8 @@ collate_result_files_helper <- function ( raw_results_directory, triplet_motifs_
 	final_results_table_count_triplet_motifs <- get_full_results_table(count_triplet_motifs_observed, count_triplet_motifs_randomized, 
 																	   p.value=p_values) 
 
-	write.table ( count_triplet_motifs_randomized, file=file.path( final_results_directory, count_triplet_motifs_randomized_file ))
-	write.table (final_results_table_count_triplet_motifs, file=file.path( final_results_directory, triplet_motifs_full_results_file ) )
+	write.table ( count_triplet_motifs_randomized, file=file.path( raw_results_directory, final_results_directory_pattern, count_triplet_motifs_randomized_file ))
+	write.table (final_results_table_count_triplet_motifs, file=file.path( raw_results_directory, final_results_directory_pattern, triplet_motifs_full_results_file ) )
 	
 	return( final_results_table_count_triplet_motifs)
 }
