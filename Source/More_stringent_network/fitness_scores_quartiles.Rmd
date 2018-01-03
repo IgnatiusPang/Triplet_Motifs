@@ -1,0 +1,30 @@
+---
+title: "Analysis of the distribution of fitness scores for strigent set (negative interactions only)"
+output: html_notebook
+---
+
+```{r}
+
+plot (density( filtered_costanzo_stringent[, "genetic_interaction_score"]))
+
+summary( filtered_costanzo_stringent[, "genetic_interaction_score"])
+
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -1.1616 -0.2308 -0.1670 -0.2077 -0.1381 -0.1201 
+
+
+filtered_costanzo_stringent  %>% dplyr::count()
+dplyr::filter( filtered_costanzo_stringent,  genetic_interaction_score < -0.1381) %>% dplyr::count()
+dplyr::filter( filtered_costanzo_stringent,  genetic_interaction_score < -0.1670) %>% dplyr::count()
+dplyr::filter( filtered_costanzo_stringent,  genetic_interaction_score < -0.2308) %>% dplyr::count()
+
+```
+
+```{r}
+
+quantile_threshold <- quantile( filtered_costanzo_stringent[, "genetic_interaction_score"], probs=seq(0.70, 0.95, 0.05))
+
+names( quantile_threshold)
+
+```
+
