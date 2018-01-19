@@ -8,6 +8,30 @@
 
 Negative genetic interactions in _Saccharomyces cerevisiae_ have been systematically screened to near-completeness, with >500,000 interactions identified. Nevertheless, the biological basis of these interactions remains poorly understood. To investigate this, we analyzed negative genetic interactions within an integrated biological network, being the union of proteinprotein, kinase-substrate, and transcription factor-target gene interactions. Network triplets, containing two genes / proteins that show negative genetic interaction and a third protein from the network, were then analyzed. Strikingly, just six out of 15 possible triplet motif types were present, as compared to randomized networks. These were in three clear groups: protein-protein interactions, signaling and regulatory triplets where the latter two showed no overlap. In the triplets, negative genetic interactions were associated with paralogs and ohnologs, however these were very rare. Negative genetic interactions among the six triplet motifs did however show strong dosage constraints, with genes being significantly associated with toxicity on overexpression and periodicity in the cell-cycle. Negative genetic interactions overlapped with other interaction types in 37% of cases; these were predominantly associated with protein complexes or signaling events. Finally, we highlight regions of ‘network vulnerability’ containing multiple negative genetic interactions; these could be targeted in fungal species for the regulation of cell growth. 
 
+# Installations
+
+## Software Required 
+*R Statistical Computating Software:*  https://cran.r-project.org/
+*R Studio, an Integrated Development Environment for R:* https://www.rstudio.com/ 
+*Please install Java 8 first to use Cytoscape:* http://www.oracle.com/technetwork/java/javase/overview/java8-2100321.html
+*Cytoscape - a software to visualize networks:* http://www.cytoscape.org/
+
+
+## Please install these packages in R:
+
+install.packages("ggpubr")
+install.packages("igraph")
+install.packages("knitr")  *  required for the 'kable' function for printing pretty table in html
+* The parallel package is in the native R library, no installation required
+install.packages("plyr") 
+source("https://bioconductor.org/biocLite.R")
+biocLite("RCy3") * The RCy3 package is reqiured for drawing network in Cytoscape using R scripts
+install.packages("reshape2") 
+install.packages("sqldf2") 
+install.packages("svglite") 
+install.packages("tidyverse") 
+
+
 # Directories
 
 * Negative_Genetic_Interactions
