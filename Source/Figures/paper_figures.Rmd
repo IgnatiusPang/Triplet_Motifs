@@ -595,16 +595,6 @@ ggsave(file.path(figures_results_directory, paste("randomization_collated_result
 ## Supplementary Figure 3b. 
 ```{r}
 
-motif_types_sorted_by_counts_desc <- c( "PP", "TUTU", "TDP", "PKU",  "KUKU",  "PKD",  
-										"PTU", "KDKU", "TDTD", "KDKD", "TDTU", "TUKD", "TDKD", "TDKU", "TUKU" )
-
-
-stat_test_result_random_edges <- stat_test_result_random_edges %>%
-								 dplyr::mutate( motif_type = factor(motif_type, levels = rev(motif_types_sorted_by_counts_desc) ), 
-								 			   is_significant_star = ifelse( is_significant==1, "*", "")  ) 
-
-
-
 ggplot(stat_test_result_random_edges, aes(y= motif_type, x= parameter )) +
 	geom_raster(aes(fill= -log10(boot_n_counts_adj_p_value+ 1/2000*15 ) )) +
 	scale_fill_gradientn( colors=rev(heat.colors(5))) + # heat.colors
