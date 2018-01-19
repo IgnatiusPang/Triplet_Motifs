@@ -51,6 +51,8 @@ source_directory 		<- "./"
 results_directory 		<- "./"
 source_directory_common <- "./"
 
+
+
 if ( length(options) != 0 &
 	 ! (  options[1] == 'katana' | options[1] == 'clive' | options[1] == 'local'  )  ) {
 	stop ( 'First command line parameter must either by katana, clive, or local') 
@@ -107,6 +109,7 @@ if (is_run_locally == TRUE) {
 	source_directory <- paste( local_base_directory, "Source/", sep="")
 	results_directory <- paste( local_base_directory, "Results/", sep="")
 	source_directory_common <- paste( source_directory, "Common/",  sep="")
+	
 }
 
 source( paste(source_directory_common, "count_triplet_motifs_helper.R", sep="") )

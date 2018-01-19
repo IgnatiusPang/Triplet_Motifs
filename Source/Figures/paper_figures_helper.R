@@ -1,4 +1,4 @@
-### Script: reshapte_triplet_motifs_helper.R
+### Script: paper_figures_helper.R
 ### Author: Ignatius Pang 
 ### Date: 13-7-2016
 ### Description: Helper functions for plotting results for the manuscript
@@ -234,11 +234,29 @@ print_box_plot_observed_vs_random_helper <- function (observed_data, random_data
 #   false_positive_counts_threshold: if the observed count is lower than a proportion of the total observed counts, then it is considered a false positive
 #   p_value_threshold: p-value below which the item is considered to be statistically significant
 #   p_value_column: which column from the p_values_data column to obtain the p-value, default value = "enrichment_adj_p_values"
+#   log_y_axis: Use log y-axis if this equal to TRUE (default FALSE)
 
 print_box_plot_observed_vs_random <- function (observed_data, random_data, p_values_data, motifs_to_include = NULL, ordering=NULL, plot_type="boxplot", 
-											   background_colour="white", axis_text_colour="black", false_positive_counts_threshold = 0.02, p_value_threshold=0.05,
-											   p_value_column="enrichment_adj_p_values") {
+											   background_colour="white", axis_text_colour="black", false_positive_counts_threshold = 0.02, 
+											   p_value_threshold=0.05,
+											   p_value_column="enrichment_adj_p_values", 
+											   log_y_axis = FALSE) {
+
 	
+
+	
+	# Add 1 to everything if using log y-axis
+	if( log_y_axis==TRUE) {
+		
+		# Add 1 to observed data
+		observed_data <- observed_data + 1
+		
+		# Change NA to zero
+		random_data[is.na( random_data)] <- 0
+		
+		# Add 1 to randomized data
+		random_data <- random_data + 1
+	}
 	
 	tidy_data <- print_box_plot_observed_vs_random_helper(observed_data, random_data, p_values_data, motifs_to_include, 
 														  ordering, plot_type, 
@@ -252,6 +270,8 @@ print_box_plot_observed_vs_random <- function (observed_data, random_data, p_val
 	
 	
 	significance_color <- sapply ( is_significant, function(x) {  return(boolean_to_colour(x)) } )
+	
+
 	
 	## Plot the plot
 	return_plot <- NULL 
@@ -274,6 +294,10 @@ print_box_plot_observed_vs_random <- function (observed_data, random_data, p_val
 				   axis.text = element_text(colour = axis_text_colour),
 				   axis.title = element_text(colour = axis_text_colour),
 				   axis.text.x=element_text(face="italic"))
+	}
+	
+	if( log_y_axis==TRUE) {
+		return_plot <- return_plot + scale_y_log10()
 	}
 	
 	
@@ -745,10 +769,12 @@ combine_graphs_using_faceting <- function ( input_list, list_of_facet_types, sor
 #   observed_results: a table with the following columns: motif_type, observed counts, facet_type
 #   random_results: a table with the following columns: motif_type, randomized counts, facet_type 
 #   is_siginificant: a table with the following columns: motif_type, is_significant (TRUE or FALSE), facet_type    
+#   log_y_axis: Use log y-axis if this equal to TRUE (default FALSE)
 # Outputs:
 #    Graph saved as specified output file
 
-motif_type_significance_box_plot_vertical_stack_faceting <- function( observed_data, random_data, is_significant, output_file_name, graphic_width, graphic_height) {
+motif_type_significance_box_plot_vertical_stack_faceting <- function( observed_data, random_data, is_significant, output_file_name, 
+																	  graphic_width, graphic_height, log_y_axis=FALSE ) {
 	
 	significance_color <- sapply ( is_significant[,"is_significant"], function(x) {  return(boolean_to_colour(x)) } )
 	
@@ -765,6 +791,10 @@ motif_type_significance_box_plot_vertical_stack_faceting <- function( observed_d
 			   axis.text = element_text(colour = axis_text_colour),
 			   axis.title = element_text(colour = axis_text_colour), 
 			   axis.text.x=element_text(face="italic"))
+	
+	if( log_y_axis==TRUE) {
+		return_plot <- return_plot + scale_y_log10()
+	}
 	
 	ggsave(output_file_name, 
 		   plot=return_plot, width=graphic_width, 

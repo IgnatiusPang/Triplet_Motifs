@@ -17,10 +17,7 @@ Create the figures for the manuscript. Does not include the network diagrams, th
 ```{r}
 
 # install.packages( 'ggpubr')
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-library(reshape2)
+library(tidyverse)
 library(svglite)
 library(ggpubr)
 ```
@@ -75,6 +72,9 @@ all_15_types_of_triplet_motifs <- c("pp"
 # Parameter for Figure 5.
 max_num_overlapping_triplets_to_show <- 35
 
+# Whether to use log y-axis
+is_use_log_y_axis <- TRUE
+
 ```
 
 
@@ -106,55 +106,6 @@ significant_types_of_motifs <- significant_types_of_motifs[ c("pp", "tutu",  "td
 
 ```
 
-## Analyze how filtering the negative genetic interaction by the stringency in fitness score affects the six types of triplet motifs. 
-```{r}
-
-full_results_file_list   <- Sys.glob ( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/More_stringent*/Final_Results/full*")
-random_results_file_list <- Sys.glob ( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/More_stringent*/Final_Results/random*")
-
-list_of_percentiles <- as.numeric( gsub( ".*More_stringent_network_(\\d+).*", "\\1", full_results_file_list) )
-
-observed_results_file_list <- map_chr( list_of_percentiles,
-	 function(x) { 
-	 		paste( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/More_stringent_network_", x,"/Job_", 
-	 		   		(x / 5*20),"/results_count_triplet_motifs_costanzo.tab", sep="") 
-	 	 }) 
-
-input_list <- list( full_results_file_list, 
-			 random_results_file_list, 
-			 observed_results_file_list)
-
-## Test length of inpu
-map ( input_list, length)
-
-results_list <- combine_graphs_using_faceting ( input_list, list_of_percentiles, sort_facet_decreasing=TRUE)
-
-is_significant_tidy <- results_list$is_significant
-observed_data_tidy <- results_list$observed_data
-random_data_tidy <- results_list$random_data
-	
- significance_color <- sapply ( is_significant_tidy[,"is_significant"], function(x) {  return(boolean_to_colour(x)) } )
-
- background_colour <- "white"
- 
-	return_plot <- ggplot(random_data_tidy, aes(facet_type, value)) + 
-			geom_boxplot() + 
-			geom_point( data=observed_data_tidy, aes(x=facet_type, y=value  )   ## Add the observed values as additional points
-						, color=significance_color, size=2 , alpha=0.5) 	+ # , size=4 , alpha=0.5
-			xlab( "Percentage of Negative Genetic Interactions") 	+ 
-			ylab( "Counts")  + 
-			facet_grid( key ~., scales="free") +
-			theme( plot.background = element_rect(fill = background_colour, color=background_colour), 
-				   axis.text = element_text(colour = axis_text_colour),
-				   axis.title = element_text(colour = axis_text_colour),
-				   strip.text.y=element_text(face="italic"))
-
-
-	ggsave(file.path(figures_results_directory, paste( "more_stringent_network_all", figure_file_suffix, sep="") ), 
-	   plot=return_plot, width=graphic_width, 
-	   height=graphic_height*2 ) 
-	
-```
 
 
 
@@ -195,9 +146,15 @@ negative_interactions_observed <- read.table ( file= file.path( computational_re
 																"Negative_Genetic_Interactions/Job_21/results_count_triplet_motifs_costanzo.tab"), 
 								               header=TRUE )
 
+
+# head( as.data.frame(negative_interactions_observed) + 1)
+# temp_random <- negative_interactions_random
+# negative_interactions_random[ is.na(negative_interactions_random)] <- 0
+# head( as.data.frame(temp_random) + 1)
+
 print_box_plot_observed_vs_random(negative_interactions_observed, negative_interactions_random, negative_interactions_full, significant_types_of_motifs,
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
-								  axis_text_colour=axis_text_colour)
+								  axis_text_colour=axis_text_colour, log_y_axis=is_use_log_y_axis)
 
 ggsave(file.path(figures_results_directory, paste( "significant_triplet_motifs_negative_gi", figure_file_suffix, sep="") ), 
 	   plot=last_plot(), width=graphic_width, 
@@ -220,7 +177,7 @@ orthomcl_paralogs_observed <- read.table ( file.path( computational_results_dire
 
 print_box_plot_observed_vs_random(orthomcl_paralogs_observed, orthomcl_paralogs_random, orthomcl_paralogs_full, significant_types_of_motifs,
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
-								  axis_text_colour=axis_text_colour)
+								  axis_text_colour=axis_text_colour, log_y_axis=is_use_log_y_axis)
 
 ggsave(file.path(figures_results_directory, paste("orthomcl_paralogs", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
 
@@ -323,25 +280,40 @@ analyze_gi_edges_counts_gathered[, "motif_type"] <- factor ( analyze_gi_edges_co
 joined_table_summarized_filtered[, "edge_type"] <- factor ( joined_table_summarized_filtered[,"edge_type"], levels=edge_type_levels_order)
 analyze_gi_edges_counts_gathered[, "edge_type"] <- factor ( analyze_gi_edges_counts_gathered[,"edge_type"], levels=edge_type_levels_order)
 
-ggplot_analyze_gi_edges <- ggplot(analyze_gi_edges_counts_gathered, aes(edge_type, counts)) +
-	geom_boxplot() +
+analyze_gi_edges_counts_gathered <- dplyr::mutate( analyze_gi_edges_counts_gathered, counts = ifelse( is.na(counts), 1, counts+1) )
+
+joined_table_summarized_filtered <- dplyr::mutate( joined_table_summarized_filtered, observed_counts = observed_counts +1)
+
+
+ggplot_analyze_gi_edges <- ggplot(analyze_gi_edges_counts_gathered, aes(edge_type, counts)) 
+
+
+if (is_use_log_y_axis == TRUE ) {
+	
+	ggplot_analyze_gi_edges <- ggplot_analyze_gi_edges + scale_y_log10()
+}
+
+ggplot_analyze_gi_edges <- ggplot_analyze_gi_edges +
+	geom_boxplot( width = 6) +  # The width parameter changes the width of the boxplot and how the boxplot bunch up together.
 	## Add the observed values as additional points
 	geom_point( data=joined_table_summarized_filtered, aes(x=edge_type, y=observed_counts, color=color ),
 				 size=4 , alpha=0.5) 	+
 	scale_color_identity()
 
+
 ### With wrapping
-ggplot_analyze_gi_edges + 
+ggplot_analyze_gi_edges <- ggplot_analyze_gi_edges + 
 	## Add faceting
-	facet_wrap ( ~ motif_type , scales="free") +
+	facet_wrap ( ~ motif_type, scales="free") +
 	xlab( "Types of Motifs") 	+ 
 	ylab( "Counts") + 
 	theme( axis.text.x=element_text(face="italic") ,  strip.text.x=element_text(face="italic"), 
 		   text = element_text(size=20)
-		   )
+		   )  +  
+    scale_x_discrete( )
 
 ggsave(file.path(figures_results_directory, paste( "analyze_gi_edges_wrap", figure_file_suffix, sep="")), 
-	   plot=last_plot(), width=10.3, height=7.5 ) # , width=10, height=7
+	   plot=ggplot_analyze_gi_edges, width=10.3, height=7.5 ) # , width=10, height=7
 ```
 
 
@@ -396,7 +368,7 @@ essential_ab_observed <- read.table ( file.path( computational_results_directory
 
 print_box_plot_observed_vs_random(essential_ab_observed, essential_ab_random, essential_ab_full, significant_types_of_motifs,
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
-								  axis_text_colour=axis_text_colour)
+								  axis_text_colour=axis_text_colour, log_y_axis=is_use_log_y_axis)
 
 ggsave(file.path(figures_results_directory, paste("essential_gene_ab", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
 
@@ -417,7 +389,7 @@ essential_c_observed <- read.table ( file.path( computational_results_directory,
 
 print_box_plot_observed_vs_random(essential_c_observed, essential_c_random, essential_c_full, significant_types_of_motifs,
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
-								  axis_text_colour=axis_text_colour)
+								  axis_text_colour=axis_text_colour, log_y_axis=is_use_log_y_axis)
 
 ggsave(file.path(figures_results_directory, paste("essential_gene_c", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
 
@@ -436,7 +408,7 @@ periodic_ab_observed <- read.table ( file.path( computational_results_directory,
 
 print_box_plot_observed_vs_random(periodic_ab_observed, periodic_ab_random, periodic_ab_full, significant_types_of_motifs,
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
-								  axis_text_colour=axis_text_colour)
+								  axis_text_colour=axis_text_colour, log_y_axis=is_use_log_y_axis)
 
 ggsave(file.path(figures_results_directory, paste("periodic_ab", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
 
@@ -455,7 +427,7 @@ periodic_c_observed <- read.table ( file.path( computational_results_directory,
 
 print_box_plot_observed_vs_random(periodic_c_observed, periodic_c_random, periodic_c_full, significant_types_of_motifs,
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
-								  axis_text_colour=axis_text_colour)
+								  axis_text_colour=axis_text_colour, log_y_axis=is_use_log_y_axis)
 
 ggsave(file.path(figures_results_directory, paste("periodic_c", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
 
@@ -475,7 +447,7 @@ overexpression_ab_observed <- read.table ( file.path( computational_results_dire
 
 print_box_plot_observed_vs_random(overexpression_ab_observed, overexpression_ab_random, overexpression_ab_full, significant_types_of_motifs,
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
-								  axis_text_colour=axis_text_colour)
+								  axis_text_colour=axis_text_colour, log_y_axis=is_use_log_y_axis)
 
 ggsave(file.path(figures_results_directory, paste("overexpression_ab", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
 
@@ -496,7 +468,8 @@ overexpression_c_observed <- read.table ( file.path( computational_results_direc
 											   "Overexpressed_Toxic_Genes/Job_1/observed_c_overexpressed_toxic_gene_counts.tab"), header =TRUE)
 
 print_box_plot_observed_vs_random(overexpression_c_observed, overexpression_c_random, overexpression_c_full, significant_types_of_motifs,
-								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour )
+								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
+								  log_y_axis=is_use_log_y_axis )
 
 ggsave(file.path(figures_results_directory, paste("overexpression_c", figure_file_suffix, sep="")), plot=last_plot(), width=graphic_width, height=graphic_height )
 
@@ -535,7 +508,7 @@ result_list <- combine_graphs_using_faceting ( input_list, list_of_go_types, sor
 motif_type_significance_box_plot_vertical_stack_faceting( result_list$observed_data, 
 														  result_list$random_data, 
 														  result_list$is_significant, 
-														  output_file_name, graphic_width, graphic_height*2)
+														  output_file_name, graphic_width, graphic_height*2, log_y_axis = is_use_log_y_axis )
 
 ```
 
@@ -560,7 +533,7 @@ negative_interactions_observed <- read.table ( file= file.path( computational_re
 
 print_box_plot_observed_vs_random(negative_interactions_observed, negative_interactions_random, negative_interactions_full, significant_types_of_motifs,
 								  ordering=significant_types_of_motifs, plot_type="boxplot", background_colour=plot_background_colour, 
-								  axis_text_colour=axis_text_colour)
+								  axis_text_colour=axis_text_colour, log_y_axis = is_use_log_y_axis )
 
 ggsave(file.path(figures_results_directory, paste( "significant_Phenotype", figure_file_suffix, sep="") ), 
 	   plot=last_plot(), width=graphic_width, 
@@ -570,3 +543,129 @@ ggsave(file.path(figures_results_directory, paste( "significant_Phenotype", figu
 
 
 
+
+## Supplementary Figure 3a. 
+```{r}
+
+# randomization_collated_counts %>% dplyr::select(one_of(c("motif_type"))) %>% distinct()
+# randomization_collated_counts %>% dplyr::filter ( motif_type == "KDKD"  & parameter == 0.2) 
+
+motif_types_sorted_by_counts_desc <- c( "PP", "TUTU", "TDP", "PKU",  "KUKU",  "PKD",  
+										"PTU", "KDKU", "TDTD", "KDKD", "TDTU", "TUKD", "TDKD", "TDKU", "TUKU" )
+
+summary_for_heatmap <-  randomization_collated_counts %>%
+	dplyr::filter (  is.na(motif_type) == FALSE ) %>%
+	tidyr::spread( experiment, counts ) %>%
+	dplyr::select( one_of( c( "motif_type", "parameter", "Before", "After"))) %>%
+	dplyr::mutate( Before=ifelse(is.na(Before),0, Before), 
+				   After=ifelse(is.na(After),0, After) ) %>%
+	dplyr::group_by( motif_type, parameter ) %>%
+	dplyr::summarise ( median_before=median(Before), median_after=median(After) ) %>%
+	dplyr::mutate( fold_enrichment_ratio = (median_before + 1)/ (median_after  + 1)) %>%
+	dplyr::ungroup()
+
+summary_for_heatmap <- summary_for_heatmap %>%
+								 dplyr::mutate( motif_type = factor(motif_type, levels = rev(motif_types_sorted_by_counts_desc) ),
+								 				parameter = factor ( parameter, levels = sort ( unique (parameter ))				     ))  
+
+stat_test_result_random_edges <- stat_test_result_random_edges %>%
+								 dplyr::mutate( motif_type = factor(motif_type, levels = rev(motif_types_sorted_by_counts_desc) ), 
+								 			   parameter = factor ( parameter, levels = sort ( unique (parameter )))	, 
+								 			   is_significant_star = ifelse( is_significant==1, "*", "")  ) 
+
+
+ggplot(summary_for_heatmap, aes(y= motif_type, x= parameter )) +
+	geom_raster(aes(fill=(fold_enrichment_ratio) ) ) +
+	geom_text(data=stat_test_result_random_edges, aes(label=is_significant_star   )) + 
+	scale_fill_gradientn( colors=rev(heat.colors(5))) + #heat.colors
+	theme( axis.text.y = element_text(face = "italic")) + 
+	guides(fill=guide_colourbar(title="Fold enrichment ratio")) + 
+	xlab( "Proportion of negative genetic interactions added or removed") +
+	ylab ('Triplet Motif Types') 
+
+ggsave(file.path(figures_results_directory, paste("randomization_collated_results_color_by_fold_enrichment", figure_file_suffix, sep="")), plot=last_plot()) 
+
+# summary_for_heatmap %>% dplyr::filter ( motif_type == "KDKD"  & parameter == 0.2) 
+#summary_for_heatmap %>% dplyr::filter ( motif_type == "TUKU"  ) 
+
+
+```
+
+
+## Supplementary Figure 3b. 
+```{r}
+
+motif_types_sorted_by_counts_desc <- c( "PP", "TUTU", "TDP", "PKU",  "KUKU",  "PKD",  
+										"PTU", "KDKU", "TDTD", "KDKD", "TDTU", "TUKD", "TDKD", "TDKU", "TUKU" )
+
+
+stat_test_result_random_edges <- stat_test_result_random_edges %>%
+								 dplyr::mutate( motif_type = factor(motif_type, levels = rev(motif_types_sorted_by_counts_desc) ), 
+								 			   is_significant_star = ifelse( is_significant==1, "*", "")  ) 
+
+
+
+ggplot(stat_test_result_random_edges, aes(y= motif_type, x= parameter )) +
+	geom_raster(aes(fill= -log10(boot_n_counts_adj_p_value+ 1/2000*15 ) )) +
+	scale_fill_gradientn( colors=rev(heat.colors(5))) + # heat.colors
+	theme( axis.text.y = element_text(face = "italic")) + 
+	guides(fill=guide_colourbar(title=expression("-log"[10]*"(adjusted p-value)"))) + 
+	geom_text( aes(label=is_significant_star   ))  + 
+	xlab( "Proportion of negative genetic interactions added or removed") +
+	ylab ('Triplet Motif Types')
+
+
+
+ggsave(file.path(figures_results_directory, paste("randomization_collated_results_color_by_p_values", figure_file_suffix, sep="")), plot=last_plot() ) 
+
+```
+
+## Supplementary Figure 4. Analyze how filtering the negative genetic interaction by the stringency in fitness score affects the six types of triplet motifs. 
+```{r}
+
+full_results_file_list   <- Sys.glob ( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/More_stringent*/Final_Results/full*")
+random_results_file_list <- Sys.glob ( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/More_stringent*/Final_Results/random*")
+
+list_of_percentiles <- as.numeric( gsub( ".*More_stringent_network_(\\d+).*", "\\1", full_results_file_list) )
+
+observed_results_file_list <- map_chr( list_of_percentiles,
+	 function(x) { 
+	 		paste( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Results/Bootstrap_p_values/More_stringent_network_", x,"/Job_", 
+	 		   		(x / 5*20),"/results_count_triplet_motifs_costanzo.tab", sep="") 
+	 	 }) 
+
+input_list <- list( full_results_file_list, 
+					random_results_file_list, 
+					observed_results_file_list)
+
+## Test length of inpu
+map ( input_list, length)
+
+results_list <- combine_graphs_using_faceting ( input_list, list_of_percentiles, sort_facet_decreasing=TRUE)
+
+is_significant_tidy <- results_list$is_significant
+observed_data_tidy <- results_list$observed_data
+random_data_tidy <- results_list$random_data
+	
+ significance_color <- sapply ( is_significant_tidy[,"is_significant"], function(x) {  return(boolean_to_colour(x)) } )
+
+ background_colour <- "white"
+ 
+	return_plot <- ggplot(random_data_tidy, aes(facet_type, value)) + 
+			geom_boxplot() + 
+			geom_point( data=observed_data_tidy, aes(x=facet_type, y=value  )   ## Add the observed values as additional points
+						, color=significance_color, size=2 , alpha=0.5) 	+ # , size=4 , alpha=0.5
+			xlab( "Percentage of Negative Genetic Interactions") 	+ 
+			ylab( "Counts")  + 
+			facet_grid( key ~., scales="free") +
+			theme( plot.background = element_rect(fill = background_colour, color=background_colour), 
+				   axis.text = element_text(colour = axis_text_colour),
+				   axis.title = element_text(colour = axis_text_colour),
+				   strip.text.y=element_text(face="italic")) 
+
+
+	ggsave(file.path(figures_results_directory, paste( "more_stringent_network_all", figure_file_suffix, sep="") ), 
+	   plot=return_plot, width=graphic_width, 
+	   height=graphic_height*2 ) 
+	
+```

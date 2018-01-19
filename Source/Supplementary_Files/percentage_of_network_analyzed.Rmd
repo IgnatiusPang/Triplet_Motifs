@@ -1,0 +1,634 @@
+---
+title: "percentage_of_network_analyzed.Rmd"
+author: "Ignatius Pang"
+date: "31 August 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Load libraries
+```{r}
+library(dplyr)
+library(tibble)
+library(tidyr)
+```
+
+## Global Parameters
+```{r}
+local_base_directory <- "/home/ignatius/PostDoc/2016/Triplet_Motifs"
+options <- commandArgs(trailingOnly = TRUE)
+
+source( file.path( local_base_directory, "Source/Common/parameters_file.R") ) 
+source( file.path ( source_directory_common, 'count_triplet_motifs_helper.R'))
+
+# data_directory <- "/media/z3371724/PostDoc/2016/Triplet_Motifs/Data/Triplet_Motifs_R_data/"
+
+load( paste(data_directory, "network_data_library.Rdata", sep=""))
+
+triplet_motifs_costanzo <- readRDS( file=paste(data_directory, "triplet_motifs_costanzo_2016.Rdata", sep="") ) 
+
+filtered_costanzo_stringent <- filtered_costanzo_stringent_2016
+
+colnames( filtered_costanzo_stringent)
+
+significant_types_of_motifs <- c("pp", "tutu" ,"pku" ,"kuku","tdp", "pkd"  )  
+
+```
+
+
+## Get all unique negative genetic interactions
+
+Fact check: The six types of triplet motifs are associated with 80% of the negative genetic interactions present in triplet motifs, and 8% of the known negative genetic interactions.
+
+```{r}
+
+all_negative_gi_helper_a <- filtered_costanzo_stringent[ , c("query_oln_id_edited", "array_oln_id_edited") ] %>%
+							dplyr::rename( oln_id_a=query_oln_id_edited) %>%
+							dplyr::rename( oln_id_b=array_oln_id_edited) 
+
+all_negative_gi_helper_b <- filtered_costanzo_stringent[ , c("query_oln_id_edited", "array_oln_id_edited") ] %>%
+							dplyr::rename( oln_id_b=query_oln_id_edited) %>%
+							dplyr::rename( oln_id_a=array_oln_id_edited) 
+
+all_negative_gi <- dplyr::union  (all_negative_gi_helper_a, all_negative_gi_helper_b ) %>%
+					dplyr::distinct() %>%
+				   dplyr::filter( oln_id_a >= oln_id_b ) 
+```
+
+
+
+
+
+## how many genes are in the negative genetic interaction network
+
+```{r}
+dplyr::union ( all_negative_gi[, "oln_id_b"], all_negative_gi[, "oln_id_a"] ) %>% 
+	unique() %>% 
+	length()
+
+
+# as.data.frame(filtered_costanzo_stringent[, "query_oln_id_edited"])  %>% 
+# 	rename( array_oln_id_edited=query_oln_id_edited) %>% 
+# 	dplyr::union ( as.data.frame(filtered_costanzo_stringent[, "array_oln_id_edited"]) ) %>% 
+# 	distinct() %>% 
+# 	count()
+
+```
+
+## Get the unique genetic interactions in triplet motifs 
+```{r}
+all_gi_in_triplet_motifs_helper_a <- triplet_motifs_costanzo[, c("oln_id_a", "oln_id_b", "type_ac", "type_bc")]
+
+all_gi_in_triplet_motifs_helper_b <- triplet_motifs_costanzo[, c("oln_id_b", "oln_id_a", "type_ac", "type_bc")] %>%
+										dplyr::rename( temp=oln_id_b) %>%
+										dplyr::rename( oln_id_b=oln_id_a)  %>%
+										dplyr::rename( oln_id_a=temp)
+
+all_gi_in_triplet_motifs <- dplyr::union ( all_gi_in_triplet_motifs_helper_a, 
+										   all_gi_in_triplet_motifs_helper_b) %>%
+							dplyr::filter( oln_id_a >= oln_id_b )  %>%
+							dplyr::mutate( motif_type = ifelse( type_ac >= type_bc,
+																paste (type_ac, type_bc, sep="" ) ,  
+																paste (type_bc, type_ac, sep="" ) ) ) %>%
+							dplyr::select(one_of( c("oln_id_a", "oln_id_b", "motif_type")))
+
+## In significant triplet motifs 
+all_gi_in_sig_triplet_motifs <- all_gi_in_triplet_motifs %>%
+								dplyr::filter ( motif_type %in% significant_types_of_motifs ) %>%
+								dplyr::select(one_of( c("oln_id_a", "oln_id_b"))) %>%
+								dplyr::distinct()
+
+
+## In all triplet motifs
+all_gi_in_triplet_motifs <- all_gi_in_triplet_motifs %>%
+							dplyr::select(one_of( c("oln_id_a", "oln_id_b"))) %>%
+							dplyr::distinct()
+
+```
+
+## Perform counting 
+```{r}
+all_gi_in_sig_triplet_motifs_count_check <- dplyr::count( dplyr::intersect ( all_gi_in_sig_triplet_motifs, all_negative_gi))[[1]]
+
+all_gi_in_sig_triplet_motifs_count <- dplyr::count ( all_gi_in_sig_triplet_motifs)[[1]]
+
+if( all_gi_in_sig_triplet_motifs_count_check != all_gi_in_sig_triplet_motifs_count) {
+	stop ('Something is wrong with the counts for gi in triplet motifs.')
+}
+
+all_gi_in_triplet_motifs_counts <- dplyr::count(all_gi_in_triplet_motifs)[[1]]
+
+
+all_negative_gi_counts <- dplyr::count( all_negative_gi)[[1]]
+
+print ( "Number of unique negative genetic interactions in total: ")
+all_negative_gi_counts
+
+print ( "Number of unique negative genetic interactions in all 15 triplet motifs: ")
+all_gi_in_triplet_motifs_counts
+
+print ( "Number of unique genetic interactions in the six overrepresented triplet motifs: ")
+all_gi_in_sig_triplet_motifs_count
+
+```
+
+## Calculate fractions
+```{r}
+
+print ( "Proportion of unique negative genetic interactions in all 15 triplet motifs: ")
+all_gi_in_triplet_motifs_counts/all_negative_gi_counts*100
+	
+print ( "Proportion of unique negative genetic interactions in the six overrepresented triplet motifs: ")
+all_gi_in_sig_triplet_motifs_count/all_negative_gi_counts*100
+
+
+print( "Proportion of the unique negative genetic interactions in triplet motifs that are part of significant triplet motifs: ")
+all_gi_in_sig_triplet_motifs_count/all_gi_in_triplet_motifs_counts*100
+```
+
+## There was one triplet motif that was of the type TUKU
+```{r}
+
+triplet_motifs_costanzo %>% 
+	dplyr::filter( ( type_ac == 'tu' & type_bc == 'ku' ) |
+				   	( type_ac == 'ku' & type_bc == 'tu' )  ) 
+
+```
+
+## Count negative genetic interactions where either gene is essential
+```{r}
+
+essential_genes_edited <- essential_genes %>% dplyr::mutate ( is_essential=1)
+
+## No. of all negative genetic interactions in which either one of the interacting genes are essential
+count_ngi_essential <- all_negative_gi %>%
+	dplyr::left_join ( essential_genes_edited, by=c("oln_id_a" = "oln_id")) %>%
+	dplyr::left_join ( essential_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_essential.x == 1 | is_essential.y == 1) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_essential
+
+## No. of all negative genetic interactions in triplet motifs in which either one of the interacting genes are essential
+count_ngi_triplets_essential <- all_gi_in_triplet_motifs %>%
+	dplyr::left_join ( essential_genes_edited, by=c("oln_id_a" = "oln_id")) %>%
+	dplyr::left_join ( essential_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_essential.x == 1 | is_essential.y == 1) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_triplets_essential
+
+## No. of all negative genetic interactions in significant triplet motifs in which either one of the interacting genes are essential
+count_ngi_sig_triplets_essential <- all_gi_in_sig_triplet_motifs  %>%
+	dplyr::left_join ( essential_genes_edited, by=c("oln_id_a" = "oln_id")) %>%
+	dplyr::left_join ( essential_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_essential.x == 1 | is_essential.y == 1) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_sig_triplets_essential
+
+## No. of all negative genetic interactions in triplet motifs but neither of the protein in the interacting pair are essential
+count_ngi_triplets_not_essential <- all_gi_in_triplet_motifs %>%
+	dplyr::setdiff ( all_gi_in_triplet_motifs %>%
+	dplyr::left_join ( essential_genes_edited, by=c("oln_id_a" = "oln_id")) %>%
+	dplyr::left_join ( essential_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_essential.x == 1 | is_essential.y == 1) %>%
+	dplyr::select ( oln_id_a, oln_id_b)) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_triplets_not_essential
+
+## Fishers exact test
+# Does the negative interacting pair contain at least one protein that is essential = TRUE, is the negative genetic interaction within triplet = TRUE
+essential_fisher_exact_test_a <- count_ngi_triplets_essential
+
+# Does the negative interacting pair contain at least one protein that is essential = FALSE, is the negative genetic interaction within triplet = TRUE
+essential_fisher_exact_test_b <- count_ngi_triplets_not_essential
+	
+# Does the negative interacting pair contain at least one protein that is essential = TRUE, is the negative genetic interaction within triplet = FALSE
+essential_fisher_exact_test_c <- count_ngi_essential - count_ngi_triplets_essential
+
+# Does the negative interacting pair contain at least one protein that is essential = FALSE, is the negative genetic interaction within triplet = FALSE
+
+all_genetic_interactions_count <- (all_negative_gi %>% dplyr::count() %>% as.numeric())
+essential_fisher_exact_test_d <- all_genetic_interactions_count - essential_fisher_exact_test_a - essential_fisher_exact_test_b - essential_fisher_exact_test_c
+
+essential_matrix <- matrix( c( essential_fisher_exact_test_a, essential_fisher_exact_test_b, 
+						       essential_fisher_exact_test_c, essential_fisher_exact_test_d), 2, 2 )
+
+essential_matrix
+
+fisher.test ( essential_matrix)
+
+```
+
+## Count negative genetic interactions where either gene is toxic upon overexpression
+
+```{r}
+
+overexpressed_toxic_genes_edited <- overexpressed_toxic_genes %>% dplyr::mutate ( is_toxic_upon_ox =1)
+
+## No. of all negative genetic interactions in which either one of the interacting genes are toxic upon overexpression
+count_ngi_toxic <- all_negative_gi %>%
+	dplyr::left_join ( overexpressed_toxic_genes_edited, by=c("oln_id_a" = "oln_id"))%>%
+	dplyr::left_join ( overexpressed_toxic_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_toxic_upon_ox.x == 1 | is_toxic_upon_ox.y == 1) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_toxic
+
+## No. of all negative genetic interactions in triplet motifs in which either one of the interacting genes are toxic upon overexpression
+count_ngi_triplets_toxic <- all_gi_in_triplet_motifs %>%
+	dplyr::left_join ( overexpressed_toxic_genes_edited, by=c("oln_id_a" = "oln_id"))%>%
+	dplyr::left_join ( overexpressed_toxic_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_toxic_upon_ox.x == 1 | is_toxic_upon_ox.y == 1) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_triplets_toxic
+
+## No. of all negative genetic interactions in significant triplet motifs in which either one of the interacting genes are toxic upon overexpression
+count_ngi_sig_triplets_toxic <- all_gi_in_sig_triplet_motifs  %>%
+	dplyr::left_join ( overexpressed_toxic_genes_edited, by=c("oln_id_a" = "oln_id"))%>%
+	dplyr::left_join ( overexpressed_toxic_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_toxic_upon_ox.x == 1 | is_toxic_upon_ox.y == 1) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_sig_triplets_toxic
+
+## No. of all negative genetic interactions in triplet motifs but neither of the proteins in the interacting pair are toxic upon overexpression
+count_ngi_triplets_not_toxic <- all_gi_in_triplet_motifs %>%
+	dplyr::setdiff ( all_gi_in_triplet_motifs %>%
+	dplyr::left_join ( overexpressed_toxic_genes_edited, by=c("oln_id_a" = "oln_id"))%>%
+	dplyr::left_join ( overexpressed_toxic_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_toxic_upon_ox.x == 1 | is_toxic_upon_ox.y == 1) %>%
+	dplyr::select ( oln_id_a, oln_id_b)) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_triplets_not_toxic
+
+## Fishers exact test
+# Does the negative interacting pair contain at least one protein that is toxic upon overexpression = TRUE, is the negative genetic interaction within triplet = TRUE
+toxic_fisher_exact_test_a <- count_ngi_triplets_toxic
+
+# Does the negative interacting pair contain at least one protein that is toxic upon overexpression = FALSE, is the negative genetic interaction within triplet = TRUE
+toxic_fisher_exact_test_b <- count_ngi_triplets_not_toxic
+	
+# Does the negative interacting pair contain at least one protein that is toxic upon overexpression = TRUE, is the negative genetic interaction within triplet = FALSE
+toxic_fisher_exact_test_c <- count_ngi_toxic - count_ngi_triplets_toxic
+
+# Does the negative interacting pair contain at least one protein that is toxic upon overexpression = FALSE, is the negative genetic interaction within triplet = FALSE
+
+all_genetic_interactions_count <- (all_negative_gi %>% dplyr::count() %>% as.numeric())
+toxic_fisher_exact_test_d <- all_genetic_interactions_count - toxic_fisher_exact_test_a - toxic_fisher_exact_test_b - toxic_fisher_exact_test_c
+
+toxic_matrix <- matrix( c( toxic_fisher_exact_test_a, toxic_fisher_exact_test_b, 
+						   toxic_fisher_exact_test_c, toxic_fisher_exact_test_d), 2, 2 )
+
+toxic_matrix
+
+fisher.test ( toxic_matrix)
+
+```
+
+
+## Count negative genetic interactions where either gene is cell-cycle regulated
+```{r}
+
+periodically_expressed_genes_edited <- periodically_expressed_genes %>% dplyr::mutate ( is_periodic =1)
+
+## No. of all negative genetic interactions in which either one of the interacting genes are cell-cycle regulated
+count_ngi_cell_cycle <- all_negative_gi %>%
+	dplyr::left_join ( periodically_expressed_genes_edited, by=c("oln_id_a" = "oln_id"))%>%
+	dplyr::left_join ( periodically_expressed_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_periodic.x == 1 | is_periodic.y == 1) %>%
+	dplyr::count()  %>%
+	as.numeric()
+
+count_ngi_cell_cycle
+
+## No. of all negative genetic interactions in triplet motifs in which either one of the interacting genes are cell-cycle regulated
+count_ngi_triplets_cell_cycle <- all_gi_in_triplet_motifs %>%
+	dplyr::left_join ( periodically_expressed_genes_edited, by=c("oln_id_a" = "oln_id"))%>%
+	dplyr::left_join ( periodically_expressed_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_periodic.x == 1 | is_periodic.y == 1) %>%
+	dplyr::count()  %>%
+	as.numeric()
+
+count_ngi_triplets_cell_cycle
+
+## No. of all negative genetic interactions in significant triplet motifs in which either one of the interacting genes are cell-cycle regulated
+count_ngi_sig_triplets_cell_cycle <- all_gi_in_sig_triplet_motifs  %>%
+	dplyr::left_join ( periodically_expressed_genes_edited, by=c("oln_id_a" = "oln_id"))%>%
+	dplyr::left_join ( periodically_expressed_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_periodic.x == 1 | is_periodic.y == 1) %>%
+	dplyr::count()  %>%
+	as.numeric()
+
+count_ngi_sig_triplets_cell_cycle
+
+## No. of all negative genetic interactions in triplet motifs but neither of the proteins in interacting pair are cell-cycle regulated
+count_ngi_triplets_not_cell_cycle <- all_gi_in_triplet_motifs %>%
+	dplyr::setdiff ( all_gi_in_triplet_motifs %>%
+	dplyr::left_join ( periodically_expressed_genes_edited, by=c("oln_id_a" = "oln_id"))%>%
+	dplyr::left_join ( periodically_expressed_genes_edited, by=c("oln_id_b" = "oln_id")) %>%
+	dplyr::filter ( is_periodic.x == 1 | is_periodic.y == 1) %>%
+	dplyr::select ( oln_id_a, oln_id_b)) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_triplets_not_cell_cycle
+
+
+## Fishers exact test
+
+# Does the negative interacting pair contain at least one periodically expressed gene = TRUE, is the negative genetic interaction within triplet = TRUE
+cell_cycle_fisher_exact_test_a <- count_ngi_triplets_cell_cycle
+
+# Does the negative interacting pair contain at least one periodically expressed gene = FALSE, is the negative genetic interaction within triplet = TRUE
+cell_cycle_fisher_exact_test_b <- count_ngi_triplets_not_cell_cycle
+	
+# Does the negative interacting pair contain at least one periodically expressed gene = TRUE, is the negative genetic interaction within triplet = FALSE
+cell_cycle_fisher_exact_test_c <- count_ngi_cell_cycle - count_ngi_triplets_cell_cycle
+
+# Does the negative interacting pair contain at least one periodically expressed gene = FALSE, is the negative genetic interaction within triplet = FALSE
+all_genetic_interactions_count <- (all_negative_gi %>% dplyr::count() %>% as.numeric())
+
+cell_cycle_fisher_exact_test_d <- all_genetic_interactions_count - cell_cycle_fisher_exact_test_a - cell_cycle_fisher_exact_test_b - cell_cycle_fisher_exact_test_c
+
+cell_cycle_matrix <- matrix( c( cell_cycle_fisher_exact_test_a, cell_cycle_fisher_exact_test_b, 
+						        cell_cycle_fisher_exact_test_c, cell_cycle_fisher_exact_test_d), 2, 2 )
+
+cell_cycle_matrix
+
+fisher.test ( cell_cycle_matrix)
+
+
+```
+
+## Count negative genetic interactions where both genes are paralogs or ohnologs
+
+```{r}
+
+
+orthomcl_paralogs <- clean_graph_table  (orthomcl_paralogs,  "oln_id_a", "oln_id_b", directed=FALSE ) 
+
+sgd_paralogs 	  <- clean_graph_table  (sgd_paralogs,  "oln_id_a", "oln_id_b", directed=FALSE ) 
+
+orthomcl_paralogs <- dplyr::distinct ( dplyr::union ( orthomcl_paralogs, sgd_paralogs) )
+
+orthomcl_paralogs <- clean_graph_table  (orthomcl_paralogs,  "oln_id_a", "oln_id_b", directed=FALSE ) 
+
+
+
+orthomcl_paralogs_edited <- orthomcl_paralogs %>% dplyr::mutate ( is_paralog =1)
+
+num_of_paralogs_pair <- orthomcl_paralogs_edited %>% dplyr::distinct() %>% dplyr::count() %>% as.numeric()
+
+num_of_paralogs_pair
+
+## No. of all negative genetic interactions in which the interacting pair are paralogs or ohnologs
+count_ngi_paralogs <- all_negative_gi %>%
+	dplyr::left_join ( orthomcl_paralogs_edited , by = c( "oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a")) %>%
+	dplyr::left_join ( orthomcl_paralogs_edited , by = c( "oln_id_b" = "oln_id_b", "oln_id_a" = "oln_id_a")) %>%
+	dplyr::filter ( is_paralog.x == 1 | is_paralog.y==1 ) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_paralogs
+
+## No. of all negative genetic interactions in triplet motifs in which the interacting pair are paralogs or ohnologs
+count_ngi_triplets_paralogs <- all_gi_in_triplet_motifs %>%
+	dplyr::left_join ( orthomcl_paralogs_edited , by = c( "oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a"))%>%
+	dplyr::left_join ( orthomcl_paralogs_edited , by = c( "oln_id_b" = "oln_id_b", "oln_id_a" = "oln_id_a"))%>%
+	dplyr::filter ( is_paralog.x == 1 | is_paralog.y==1 ) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_triplets_paralogs
+
+## No. of all negative genetic interactions in the six significant triplet motifs in which the interacting pair are paralogs or ohnologs
+count_ngi_sig_triplets_paralogs <- all_gi_in_sig_triplet_motifs  %>%
+	dplyr::left_join ( orthomcl_paralogs_edited , by = c( "oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a"))%>%
+	dplyr::left_join ( orthomcl_paralogs_edited , by = c( "oln_id_b" = "oln_id_b", "oln_id_a" = "oln_id_a"))%>%
+	dplyr::filter ( is_paralog.x == 1 | is_paralog.y==1 ) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_sig_triplets_paralogs
+
+## No. of all negative genetic interactions in triplet motifs but the interacting pair are not paralogs or ohnologs
+count_ngi_triplets_not_paralogs <- all_gi_in_triplet_motifs %>%
+	dplyr::setdiff ( all_gi_in_triplet_motifs %>%
+	dplyr::left_join ( orthomcl_paralogs_edited , by = c( "oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a"))%>%
+	dplyr::left_join ( orthomcl_paralogs_edited , by = c( "oln_id_b" = "oln_id_b", "oln_id_a" = "oln_id_a"))%>%
+	dplyr::filter ( is_paralog.x == 1 | is_paralog.y ==1 ) %>%
+	dplyr::select ( oln_id_a, oln_id_b)) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_triplets_not_paralogs
+
+
+## Fishers exact test
+
+# Does the negative interacting pair contain a paralog = TRUE, is the negative genetic interaction within triplet = TRUE
+paralog_fisher_exact_test_a <- count_ngi_triplets_paralogs
+
+# Does the negative interacting pair contain a paralog = FALSE, is the negative genetic interaction within triplet = TRUE
+paralog_fisher_exact_test_b <- count_ngi_triplets_not_paralogs
+	
+# Does the negative interacting pair contain a paralog = TRUE, is the negative genetic interaction within triplet = FALSE
+paralog_fisher_exact_test_c <- count_ngi_paralogs - count_ngi_triplets_paralogs
+
+# Does the negative interacting pair contain a paralog = FALSE, is the negative genetic interaction within triplet = FALSE
+all_genetic_interactions_count <- (all_negative_gi %>% dplyr::count() %>% as.numeric())
+paralog_fisher_exact_test_d <- all_genetic_interactions_count - paralog_fisher_exact_test_a - paralog_fisher_exact_test_b - paralog_fisher_exact_test_c
+
+paralog_matrix <- matrix( c( paralog_fisher_exact_test_a, paralog_fisher_exact_test_b, 
+						  paralog_fisher_exact_test_c, paralog_fisher_exact_test_d), 2, 2 )
+
+paralog_matrix
+
+fisher.test ( paralog_matrix)
+
+
+```
+
+## Negative genetic interactions overlapping with other types of interactions
+```{r}
+
+all_interactions <- read.table ( "/home/ignatius/PostDoc/2016/Triplet_Motifs/Results/Supplementary_Files/all_interactions.tab", 
+ 								 header=TRUE, sep="\t", quote="", stringsAsFactors = FALSE)
+
+# Total number of negative genetic interactions
+all_interactions %>%
+	dplyr::filter( oln_id_a > oln_id_b) %>%
+	dplyr::select(one_of( c( "oln_id_a", "oln_id_b", "interaction_type_abbrev" ))) %>%
+	dplyr::mutate( count = 1) %>%
+	tidyr::spread( "interaction_type_abbrev", "count") %>%
+	dplyr::filter( ifelse ( is.na(ng), FALSE,  ng == 1) ) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+all_genetic_interactions_count <- (all_negative_gi %>% dplyr::count() %>% as.numeric())
+
+# Total number of negative genetic interactions which overlap with at least one other type of interaction 
+count_ngi_overlap <- all_interactions %>%
+	dplyr::filter( oln_id_a > oln_id_b) %>%
+	dplyr::select(one_of( c( "oln_id_a", "oln_id_b", "interaction_type_abbrev" ))) %>%
+	dplyr::mutate( count = 1) %>%
+	tidyr::spread( "interaction_type_abbrev", "count") %>%
+	dplyr::filter(   ifelse ( is.na(ng), FALSE,  ng == 1) & 
+					 	( ifelse ( is.na(kd), FALSE, kd >= 1) |
+					 	  ifelse ( is.na(ku), FALSE, ku >= 1) |
+					 	  ifelse ( is.na(p ), FALSE, p  >= 1) |
+					 	  ifelse ( is.na(td), FALSE, td >= 1) |
+					 	  ifelse ( is.na(tu), FALSE, tu >= 1)  ) ) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_overlap
+
+# Total number of interactions, including all types of interactions. Overlapping interactions were only counted once.
+count_ngi_triplets_overlap <- all_interactions %>%
+	dplyr::filter( oln_id_a > oln_id_b & is_part_of_triplet_motif == 1) %>%
+	dplyr::select(one_of( c( "oln_id_a", "oln_id_b", "interaction_type_abbrev" ))) %>%
+	dplyr::mutate( count = 1) %>%
+	tidyr::spread( "interaction_type_abbrev", "count") %>%
+	dplyr::filter( ng == 1 & ( 	kd == 1 | ku == 1 | p == 1 | td == 1 | tu == 1) ) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_triplets_overlap
+
+# Total number of interactions where , including all types of interactions. Overlapping interactions were only counted once.
+count_ngi_sig_triplets_overlap <- all_interactions %>%
+	dplyr::inner_join(all_gi_in_sig_triplet_motifs ) %>%
+	dplyr::filter( oln_id_a > oln_id_b & is_part_of_triplet_motif == 1) %>%
+	dplyr::select(one_of( c( "oln_id_a", "oln_id_b", "interaction_type_abbrev" ))) %>%
+	dplyr::mutate( count = 1) %>%
+	tidyr::spread( "interaction_type_abbrev", "count") %>%
+	dplyr::filter( ng == 1 & ( 	kd == 1 | ku == 1 | p == 1 | td == 1 | tu == 1) ) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_sig_triplets_overlap
+
+
+
+## No. of all negative genetic interactions in triplet motifs but the interacting pair do not overlap with other types of interactions 
+count_ngi_triplets_not_overlap <- all_gi_in_triplet_motifs %>%
+	dplyr::setdiff ( all_interactions %>%
+	dplyr::filter( oln_id_a > oln_id_b & is_part_of_triplet_motif == 1) %>%
+	dplyr::select(one_of( c( "oln_id_a", "oln_id_b", "interaction_type_abbrev" ))) %>%
+	dplyr::mutate( count = 1) %>%
+	tidyr::spread( "interaction_type_abbrev", "count") %>%
+	dplyr::filter( ng == 1 & ( 	kd == 1 | ku == 1 | p == 1 | td == 1 | tu == 1) ) %>%
+	dplyr::select ( oln_id_a, oln_id_b)) %>%
+	dplyr::count() %>%
+	as.numeric()
+
+count_ngi_triplets_not_overlap
+
+## Fishers exact test
+
+# Does the negative interacting pair ovelap with other types of interactions = TRUE, is the negative genetic interaction within triplet = TRUE
+overlap_fisher_exact_test_a <- count_ngi_triplets_overlap
+
+# Does the negative interacting pair ovelap with other types of interactions = FALSE, is the negative genetic interaction within triplet = TRUE
+overlap_fisher_exact_test_b <- count_ngi_triplets_not_overlap
+	
+# Does the negative interacting pair ovelap with other types of interactions = TRUE, is the negative genetic interaction within triplet = FALSE
+overlap_fisher_exact_test_c <- count_ngi_overlap - count_ngi_triplets_overlap
+
+# Does the negative interacting pair ovelap with other types of interactions = FALSE, is the negative genetic interaction within triplet = FALSE
+all_genetic_interactions_count <- (all_negative_gi %>% dplyr::count() %>% as.numeric())
+overlap_fisher_exact_test_d <- all_genetic_interactions_count - overlap_fisher_exact_test_a - overlap_fisher_exact_test_b - overlap_fisher_exact_test_c
+
+overlap_matrix <- matrix( c( overlap_fisher_exact_test_a, overlap_fisher_exact_test_b, 
+						  overlap_fisher_exact_test_c, overlap_fisher_exact_test_d), 2, 2 )
+
+overlap_matrix
+
+fisher.test ( overlap_matrix)
+
+```
+
+## Calculating the number of paralog pairs that are int tiplets and show a negative interaction: 
+I'll need to calculate the number of interactions that overlap with pairs of paralogous proteins. 
+```{r}
+triplet_motifs_costanzo_2016 <- read.table ( file.path( data_directory, "triplet_motifs_costanzo_2016.txt"), 
+											 header =TRUE , stringsAsFactors = FALSE)
+
+
+gene_a <- as.character( as.vector(c( t(triplet_motifs_costanzo_2016[,1]) ,
+									 t(triplet_motifs_costanzo_2016[,1]) , 
+									 t(triplet_motifs_costanzo_2016[,2]) ) ))
+	
+gene_b <- as.character( as.vector(c( t(triplet_motifs_costanzo_2016[,2]) ,
+									 t(triplet_motifs_costanzo_2016[,3])    , 
+									 t(triplet_motifs_costanzo_2016[,3]) ) ))
+	
+edge_type_attributes <- as.character( as.vector( c( 
+		rep( "ng", length(triplet_motifs_costanzo_2016[,1] )),
+		t(triplet_motifs_costanzo_2016[, c("type_ac")]),
+		t(triplet_motifs_costanzo_2016[, c("type_bc")])
+	)  ) ) 
+	
+interactions_from_triplet_motifs_left <- data.frame( oln_id_a = gene_a, oln_id_b = gene_b, type_of_interaction = edge_type_attributes  )
+
+interactions_from_triplet_motifs_right <- data.frame( oln_id_a = gene_b, oln_id_b = gene_a, type_of_interaction = edge_type_attributes  )
+
+interactions_from_triplet_motifs <- interactions_from_triplet_motifs_left %>%
+	dplyr::union( interactions_from_triplet_motifs_right) %>%
+	dplyr::filter ( oln_id_a > oln_id_b ) %>%
+	dplyr::distinct()
+
+interactions_match_paralogs <-  interactions_from_triplet_motifs %>%
+								dplyr::left_join( orthomcl_paralogs_edited, by = c( "oln_id_a" = "oln_id_b", "oln_id_b" = "oln_id_a")) %>%
+								dplyr::left_join( orthomcl_paralogs_edited, by = c( "oln_id_b" = "oln_id_b", "oln_id_a" = "oln_id_a")) %>%
+								dplyr::filter( is_paralog.x ==1 | is_paralog.y==1 ) %>%
+								dplyr::distinct()
+
+# all unique pairs of paralogs overlapping biological interactions
+paralogs_unique_pairs_overlap_interactions <- interactions_match_paralogs %>%
+												dplyr::select ( one_of( c( "oln_id_a", "oln_id_b"))) %>%
+												dplyr::distinct()
+
+dplyr::count(paralogs_unique_pairs_overlap_interactions) # 101 pairs
+
+## What do the ones that are not negative genetic interactions consists of:
+negative_genetic_interaction_paralog <- interactions_match_paralogs %>% 
+										dplyr::filter ( type_of_interaction != "ng" ) %>% 	 
+										dplyr::select ( one_of( c( "oln_id_a", "oln_id_b"))) %>%
+										dplyr::distinct()
+
+dplyr::count(negative_genetic_interaction_paralog) # 38 rows
+
+other_biological_interactions_paralog <- interactions_match_paralogs %>% 
+										 dplyr::filter ( type_of_interaction == "ng" )  %>% 	
+										 dplyr::select ( one_of( c( "oln_id_a", "oln_id_b"))) %>%
+										 dplyr::distinct()
+
+dplyr::count( other_biological_interactions_paralog ) # 80 rows
+
+# Paris of Paralogs that form negative genetic interactions and other biological interactions: 17 rows
+dplyr::intersect( negative_genetic_interaction_paralog, other_biological_interactions_paralog) 
+
+80 + 38 - 17 == 101
+
+```
+
+

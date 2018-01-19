@@ -75,12 +75,12 @@ if (is_run_locally) {
 	
 	if ( use_costanzo_2010_dataset == TRUE) {
 		# Backup all the triplet motifs in the data directory
-		saveRDS( triplet_motifs_costanzo, file=file.path(list_of_triplets_directory, "triplet_motifs_costanzo_2010.Rdata") ) 
-		write.table( triplet_motifs_costanzo, file=file.path(list_of_triplets_directory, "triplet_motifs_costanzo_2010.txt"), row.names=FALSE ) 
+		saveRDS( triplet_motifs_costanzo, file=file.path(data_directory, "triplet_motifs_costanzo_2010.Rdata") ) 
+		write.table( triplet_motifs_costanzo, file=file.path(data_directory, "triplet_motifs_costanzo_2010.txt"), row.names=FALSE ) 
 		
 	} else {
-		saveRDS( triplet_motifs_costanzo, file=file.path(list_of_triplets_directory, "triplet_motifs_costanzo_2016.Rdata") ) 
-		write.table( triplet_motifs_costanzo, file=file.path(list_of_triplets_directory, "triplet_motifs_costanzo_2016.txt"), row.names=FALSE ) 
+		saveRDS( triplet_motifs_costanzo, file=file.path(data_directory, "triplet_motifs_costanzo_2016.Rdata") ) 
+		write.table( triplet_motifs_costanzo, file=file.path(data_directory, "triplet_motifs_costanzo_2016.txt"), row.names=FALSE ) 
 		
 	}
 }
