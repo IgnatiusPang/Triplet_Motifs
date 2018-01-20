@@ -15,7 +15,7 @@ I want to create the supplementary tables for this manuscript.
 knitr::opts_knit$set(root.dir = normalizePath("..")) 
 ```
 
-
+## Import Libraries
 ```{r}
 library(RCy3)
 library(plyr)
@@ -115,6 +115,8 @@ triplet_shared_phenotype <- read.table( file.path(supplementary_data_directory, 
 
 
 ```
+
+## Codes for Supplementary Figures S1-4 can be found in the following file: Source/Figures/paper_figures.Rmd
 
 ## Supplementary Table S1. Negative Genetic interactions 
 ```{r}
@@ -249,7 +251,7 @@ dim( tf_network_filtered)
 
 ```
 
-## Helper Codes: Build phenotype master table 
+## Supplementary Table S5: Build phenotype master table 
 ```{r}
 
 toxic_upon_overexpression <- toxic_upon_overexpression %>%
@@ -421,7 +423,7 @@ dim(interactions_combined)
 ```
 
 
-## Table S9. The list of all the triplets in the filtered integrated network and triplets with genes that are cell cycle-regulated, essential and toxic on overexpression, and their shared phenotype on knockout and GO slim terms.
+## Supplementary Table S9. The list of all the triplets in the filtered integrated network and triplets with genes that are cell cycle-regulated, essential and toxic on overexpression, and their shared phenotype on knockout and GO slim terms.
 ```{r}
 
 densely_annotated_triplet_motif <- sqldf( "select data_a.gene_name as gene_name_a
@@ -651,14 +653,14 @@ all_negative_gi_counts
  
  # Protein interaction network
   # Number of interactions
- sbi_interactome %>%
+ sbi_interactome_collated %>%
      dplyr::select (one_of(c("oln_id_a", "oln_id_b"))) %>%
-     dplyr::filter( oln_id_a > oln_id_b) %>%
+     dplyr::filter( oln_id_a >= oln_id_b) %>%
      dplyr::distinct()%>%
      dplyr::count()
  
   # Number of proteins
- c( sbi_interactome [, "oln_id_a"], sbi_interactome [, "oln_id_b"] ) %>% unique() %>% length()
+ c( sbi_interactome_collated [, "oln_id_a"][[1]], sbi_interactome_collated [, "oln_id_b"][[1]] ) %>% unique() %>% length()
 
 # Transcriptional regulatory network
 
@@ -671,7 +673,7 @@ all_negative_gi_counts
 
 # Number of proteins
  c( tf_network_collated [, "oln_id_a"][[1]], tf_network_collated [, "oln_id_b"][[1]] ) %>% unique() %>% length()
- 
+
 # Number of transcription factors
  tf_network_collated %>%
     dplyr::filter( interaction_type_abbrev == 'td' ) %>%
@@ -680,12 +682,24 @@ all_negative_gi_counts
      dplyr::count()
  
 # Total Number of Interactions (Unique Pairs of Proteins)
-interactions_combined %>%
+  interactions_combined_a <- interactions_combined %>%
+                            dplyr::select ( one_of ( c( "oln_id_a", "oln_id_b")))
+ 
+  interactions_combined_b <- interactions_combined %>%
+                            dplyr::select ( one_of ( c( "oln_id_a", "oln_id_b"))) %>%
+              							dplyr::rename( temp=oln_id_a) %>%
+              							dplyr::rename( oln_id_a=oln_id_b) %>%
+                            dplyr::rename( oln_id_b=temp) 
+ 
+  unique_interactions_combined <- dplyr::union  (interactions_combined_a, interactions_combined_b ) %>%
+					dplyr::distinct()  %>%
+				  dplyr::filter( oln_id_a >= oln_id_b ) 
+  
+ 
+ unique_interactions_combined %>%
   dplyr::select (one_of(c("oln_id_a", "oln_id_b"))) %>%
-  dplyr::filter (oln_id_a > oln_id_b) %>%
-  dplyr::distinct()%>%
+  dplyr::distinct() %>%
   dplyr::count()
-
 
 # Total Number of Proteins 
  c( interactions_combined [, "oln_id_a"], interactions_combined [, "oln_id_b"] ) %>% unique() %>% length()
@@ -693,9 +707,13 @@ interactions_combined %>%
 
 # Total Number of Interactions (Non-unique pairs and direction)
 interactions_combined %>%
-  dplyr::select (one_of(c("oln_id_a", "oln_id_b"))) %>%
-  dplyr::filter (oln_id_a > oln_id_b) %>%
+  dplyr::select (one_of(c("oln_id_a", "oln_id_b", "interaction_type_abbrev"))) %>%
+  dplyr::filter (oln_id_a >= oln_id_b) %>%
+    dplyr::filter ( !(oln_id_a == oln_id_b & interaction_type_abbrev == "tu") ) %>%
+    dplyr::filter ( !(oln_id_a == oln_id_b & interaction_type_abbrev == "ku") ) %>%
+  dplyr::distinct() %>%
   dplyr::count()
+
 
 ```
 
@@ -863,4 +881,11 @@ triplets_negative_gi_counts
 
 
 ```
+
+
+## Supplementary Table S10
+Results for Supplementary Table S10 can be found in the following file: Results/Bootstrap_p_values/Negative_Genetic_Interactions/Final_Results/full_results_triplet_motifs_costanzo_2016_collated.tab
+
+## Supplementary Table S11
+Codes for Supplementary Table S11 can be found in the following R Notebook (in the same directory as this script): Source/Supplementary_Files/percentage_of_network_analyzed.Rmd
 

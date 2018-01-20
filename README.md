@@ -98,6 +98,19 @@ install.packages("tidyverse")
 * Examples 
   + Some examples for analysis of triplet motifs
 
+# Running the Analyses on a Local Computer
+
+To setup the scripts to run on a local computer, it is important to adjust the following parameters before running the scripts. This parameter could be changed in the 'Source/Common/parameters_file.R' file. Please make sure all instances of these parameters are updated. 
+
+
+The 'number_of_randomized_trials' is the number of randomization tests to perform (e.g. 2000 for the manuscript). This number is currently set to 4 for running on a local computer to enable test runs to be completed in a relatively short time.
+
+number_of_randomized_trials <- 4
+
+The 'num_iteration_rewire_network' is the number of edge swaps, represented as the proportion of edges in each network, for each randomization test. If this number is NULL, the the default is to use a number of edge swaps equal to the total number of edges in the network. This number is curently set to a value of 0.001 (0.1% of the edges in each network) to enable trial runs to be completed in a relatively short time.  
+
+num_iteration_rewire_network <- 0.001 
+
 # Stucture of Analysis and Results Directory
 Most of the data analysis directories contain the following script
 

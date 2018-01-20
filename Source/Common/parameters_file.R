@@ -31,27 +31,47 @@ sessionInfo()
 #  script.R <compute location (katana|clive|local)>  <array job ID> <number of randomized trials>
 
 #########################################################
-### Parameters 
-
-is_run_locally 			     <- TRUE
-array_job_id 			     <- NULL 
-random_number_seed 		     <- 1985
-number_of_cores_to_use 		 <- 24
-number_of_randomized_trials  <- 100
-num_iteration_rewire_network <- NULL # Number of times each network is rewired before counting the triplet motifs.
-									 # If null, this is equal to the number of edges in the network. 
-use_costanzo_2010_dataset 	 <- FALSE
-
-
+## Default directories
 local_base_directory  <-  "/home/ignatius/PostDoc/2016/Triplet_Motifs/"
-
-
 data_directory 			<- "./"
 source_directory 		<- "./"
 results_directory 		<- "./"
 source_directory_common <- "./"
 
+######################################################################
+### ***************************************************************###
+### IMPORTANT PARAMETERS TO SETUP BEFORE USING ANY OF THE SCRIPTS  ###
+### ***************************************************************###
+######################################################################
 
+is_run_locally 			         <- TRUE
+array_job_id 			           <- NULL 
+random_number_seed 		       <- 1985
+number_of_cores_to_use 		   <- 24
+number_of_randomized_trials  <- 100
+num_iteration_rewire_network <- NULL # Number of times each network is rewired before counting the triplet motifs.
+									 # If null, this is equal to the number of edges in the network. 
+use_costanzo_2010_dataset 	 <- FALSE
+
+if ( length(options) != 0 
+     & ( options[1] == 'katana' | options[1] == 'clive')  ) {
+  is_run_locally <- FALSE
+}
+
+## Deal with parameters with the code are to be ran locally
+if (is_run_locally == TRUE) {
+  random_number_seed <- 1985
+  number_of_cores_to_use <- 4
+  number_of_randomized_trials <- 4
+  num_iteration_rewire_network <- 0.001 # Number of times each network is rewired before counting the triplet motifs
+  
+  data_directory <- paste( local_base_directory, "Data/Triplet_Motifs_R_data/", sep="")
+  source_directory <- paste( local_base_directory, "Source/", sep="")
+  results_directory <- paste( local_base_directory, "Results/", sep="")
+  source_directory_common <- paste( source_directory, "Common/",  sep="")
+}
+
+##################################################################################################################
 
 if ( length(options) != 0 &
 	 ! (  options[1] == 'katana' | options[1] == 'clive' | options[1] == 'local'  )  ) {
@@ -98,19 +118,6 @@ if ( is_run_locally == FALSE & length(options) >=3 ) {
 	}
 }
 
-## Deal with parameters with the code are to be ran locally
-if (is_run_locally == TRUE) {
-	random_number_seed <- 1985
-	number_of_cores_to_use <- 4
-	number_of_randomized_trials <- 4
-	num_iteration_rewire_network <- 0.001 # Number of times each network is rewired before counting the triplet motifs
-	
-	data_directory <- paste( local_base_directory, "Data/Triplet_Motifs_R_data/", sep="")
-	source_directory <- paste( local_base_directory, "Source/", sep="")
-	results_directory <- paste( local_base_directory, "Results/", sep="")
-	source_directory_common <- paste( source_directory, "Common/",  sep="")
-	
-}
 
 source( paste(source_directory_common, "count_triplet_motifs_helper.R", sep="") )
 
