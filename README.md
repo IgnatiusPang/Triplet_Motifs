@@ -1,4 +1,4 @@
-# Deciphering the network basis of negative genetic interactions in *Saccharomyces cerevisiae*with integrated biological networks and triplet motif analysis
+# Deciphering the network basis of negative genetic interactions in *Saccharomyces cerevisiae* with integrated biological networks and triplet motif analysis
 
 # Quick summary 
 
@@ -19,17 +19,17 @@ Negative genetic interactions in _Saccharomyces cerevisiae_ have been systematic
 
 ## Please install these packages in R:
 
-install.packages("ggpubr")
-install.packages("igraph")
-install.packages("knitr")  *  required for the 'kable' function for printing pretty table in html
+* install.packages("ggpubr")
+* install.packages("igraph")
+* install.packages("knitr")  #  required for the 'kable' function for printing pretty table in html
 * The parallel package is in the native R library, no installation required
-install.packages("plyr") 
-source("https://bioconductor.org/biocLite.R")
-biocLite("RCy3") * The RCy3 package is reqiured for drawing network in Cytoscape using R scripts
-install.packages("reshape2") 
-install.packages("sqldf2") 
-install.packages("svglite") 
-install.packages("tidyverse") 
+* install.packages("plyr") 
+* bsource("https://bioconductor.org/biocLite.R")
+* biocLite("RCy3") # The RCy3 package is reqiured for drawing network in Cytoscape using R scripts
+* install.packages("reshape2") 
+* install.packages("sqldf2") 
+* install.packages("svglite") 
+* install.packages("tidyverse") 
 
 
 # Directories
