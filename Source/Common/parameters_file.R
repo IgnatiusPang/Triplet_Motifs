@@ -32,7 +32,7 @@ sessionInfo()
 
 #########################################################
 ## Default directories
-local_base_directory  <-  "/home/ignatius/PostDoc/2016/Triplet_Motifs/"
+local_base_directory  <-  "/home/ignatius/PostDoc/2017/Triplet_Motifs/"
 data_directory 			<- "./"
 source_directory 		<- "./"
 results_directory 		<- "./"

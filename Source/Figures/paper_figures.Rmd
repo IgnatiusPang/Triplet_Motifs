@@ -32,7 +32,7 @@ library(ggpubr)
 figure_file_suffix <- ".pdf"
 options <- commandArgs(trailingOnly = TRUE)
 
-local_base_directory <- "/home/ignatius/PostDoc/2016/Triplet_Motifs/Source"
+local_base_directory <- "/home/ignatius/PostDoc/2017/Triplet_Motifs/Source"
 source( file.path( local_base_directory, "./Common/parameters_file.R") ) 
 source( file.path ( source_directory_common, 'count_triplet_motifs_helper.R'))
 source( file.path ( source_directory, './Figures/paper_figures_helper.R') )
