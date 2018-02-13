@@ -8,6 +8,10 @@
 
 Negative genetic interactions in _Saccharomyces cerevisiae_ have been systematically screened to near-completeness, with >500,000 interactions identified. Nevertheless, the biological basis of these interactions remains poorly understood. To investigate this, we analyzed negative genetic interactions within an integrated biological network, being the union of proteinprotein, kinase-substrate, and transcription factor-target gene interactions. Network triplets, containing two genes / proteins that show negative genetic interaction and a third protein from the network, were then analyzed. Strikingly, just six out of 15 possible triplet motif types were present, as compared to randomized networks. These were in three clear groups: protein-protein interactions, signaling and regulatory triplets where the latter two showed no overlap. In the triplets, negative genetic interactions were associated with paralogs and ohnologs, however these were very rare. Negative genetic interactions among the six triplet motifs did however show strong dosage constraints, with genes being significantly associated with toxicity on overexpression and periodicity in the cell-cycle. Negative genetic interactions overlapped with other interaction types in 37% of cases; these were predominantly associated with protein complexes or signaling events. Finally, we highlight regions of ‘network vulnerability’ containing multiple negative genetic interactions; these could be targeted in fungal species for the regulation of cell growth. 
 
+# Citation
+Pang CNI, Goel A, Wilkins MR. Investigating the Network Basis of Negative Genetic Interactions in Saccharomyces cerevisiae with Integrated Biological Networks and Triplet Motif Analysis. J Proteome Res. 2018 Feb 8. doi: 10.1021/acs.jproteome.7b00649. PubMed PMID: 29392949.
+
+
 # Installations
 
 ## Software Required 
